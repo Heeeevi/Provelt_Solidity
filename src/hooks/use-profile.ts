@@ -121,7 +121,7 @@ export function useUserSubmissions(userId: string) {
       if (!submissions?.length) return [];
 
       // Fetch challenges for these submissions
-      const challengeIds = [...new Set(submissions.map(s => s.challenge_id))];
+      const challengeIds = Array.from(new Set(submissions.map(s => s.challenge_id)));
       const { data: challenges } = await supabase
         .from('challenges')
         .select('id, title, points')

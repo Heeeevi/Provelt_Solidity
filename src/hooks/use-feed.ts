@@ -18,8 +18,8 @@ async function enrichSubmissions(submissions: any[]): Promise<FeedItem[]> {
   if (!submissions.length) return [];
 
   // Get unique user IDs and challenge IDs
-  const userIds = [...new Set(submissions.map(s => s.user_id))];
-  const challengeIds = [...new Set(submissions.map(s => s.challenge_id))];
+  const userIds = Array.from(new Set(submissions.map(s => s.user_id)));
+  const challengeIds = Array.from(new Set(submissions.map(s => s.challenge_id)));
 
   // Fetch profiles
   const { data: profiles } = await supabase
