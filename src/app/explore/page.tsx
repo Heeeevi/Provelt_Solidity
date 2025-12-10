@@ -34,7 +34,7 @@ export default function ExplorePage() {
     refetch,
   } = useFeed();
 
-  const { challenges } = useChallenges();
+  const { data: challenges = [] } = useChallenges();
 
   // Infinite scroll observer
   const observerRef = useRef<IntersectionObserver>();
