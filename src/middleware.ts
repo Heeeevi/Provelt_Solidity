@@ -1,19 +1,15 @@
-import { type NextRequest } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
+import { NextResponse, type NextRequest } from 'next/server';
 
+// Simplified middleware - no Supabase in Edge runtime
+// Auth is handled client-side with wallet connection
 export async function middleware(request: NextRequest) {
-  return await updateSession(request);
+  // Just pass through - auth handled by wallet connect on client
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Only match API routes that need protection (none for now)
+    '/api/protected/:path*',
   ],
 };

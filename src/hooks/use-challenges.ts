@@ -140,7 +140,7 @@ export function useChallengeSubmissions(challengeId: string) {
       if (!submissions?.length) return [];
 
       // Fetch profiles for these submissions
-      const userIds = [...new Set(submissions.map(s => s.user_id))];
+      const userIds = Array.from(new Set(submissions.map(s => s.user_id)));
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, display_name, avatar_url')
