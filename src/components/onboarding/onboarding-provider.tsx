@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { 
   X, 
   ChevronRight, 
@@ -91,6 +92,7 @@ interface OnboardingContextType {
   startOnboarding: () => void;
   nextStep: () => void;
   prevStep: () => void;
+  goToStep: (step: number) => void;
   skipOnboarding: () => void;
   completeOnboarding: () => void;
   hasCompletedOnboarding: boolean;
@@ -109,6 +111,7 @@ export function useOnboarding() {
       startOnboarding: () => {},
       nextStep: () => {},
       prevStep: () => {},
+      goToStep: () => {},
       skipOnboarding: () => {},
       completeOnboarding: () => {},
       hasCompletedOnboarding: true,
@@ -127,19 +130,35 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
   const [currentStep, setCurrentStep] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [wasConnected, setWasConnected] = useState(false);
+  
+  const { connected } = useWallet();
 
   // Check localStorage on mount
   useEffect(() => {
     setMounted(true);
     const completed = localStorage.getItem('provelt_onboarding_completed');
-    if (!completed) {
+    if (completed) {
+      setHasCompletedOnboarding(true);
+    } else {
       setHasCompletedOnboarding(false);
-      // Auto-start onboarding for new users after a short delay
-      setTimeout(() => {
-        setIsOnboarding(true);
-      }, 1500);
     }
   }, []);
+
+  // Trigger onboarding when user first connects wallet
+  useEffect(() => {
+    if (!mounted) return;
+    
+    // Detect first-time wallet connection
+    if (connected && !wasConnected && !hasCompletedOnboarding) {
+      // User just connected wallet for the first time
+      setTimeout(() => {
+        setIsOnboarding(true);
+      }, 800); // Small delay for smooth transition
+    }
+    
+    setWasConnected(connected);
+  }, [connected, wasConnected, hasCompletedOnboarding, mounted]);
 
   const startOnboarding = useCallback(() => {
     setCurrentStep(0);
@@ -166,6 +185,12 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
     }
   }, [currentStep]);
 
+  const goToStep = useCallback((step: number) => {
+    if (step >= 0 && step < steps.length) {
+      setCurrentStep(step);
+    }
+  }, [steps.length]);
+
   const skipOnboarding = useCallback(() => {
     setIsOnboarding(false);
     localStorage.setItem('provelt_onboarding_completed', 'true');
@@ -185,6 +210,7 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
         startOnboarding,
         nextStep,
         prevStep,
+        goToStep,
         skipOnboarding,
         completeOnboarding,
         hasCompletedOnboarding,
@@ -196,97 +222,24 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
   );
 }
 
-// Spotlight overlay component
+// Centered modal overlay component
 function OnboardingOverlay() {
   const { 
     isOnboarding, 
     currentStep, 
     steps, 
     nextStep, 
-    prevStep, 
+    prevStep,
+    goToStep,
     skipOnboarding 
   } = useOnboarding();
   
-  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const step = steps[currentStep];
-
-  // Find and highlight target element
-  useEffect(() => {
-    if (!isOnboarding || !step?.targetSelector) {
-      setTargetRect(null);
-      return;
-    }
-
-    const findTarget = () => {
-      const target = document.querySelector(step.targetSelector!);
-      if (target) {
-        const rect = target.getBoundingClientRect();
-        setTargetRect(rect);
-      } else {
-        setTargetRect(null);
-      }
-    };
-
-    findTarget();
-    
-    // Re-calculate on resize/scroll
-    window.addEventListener('resize', findTarget);
-    window.addEventListener('scroll', findTarget);
-    
-    return () => {
-      window.removeEventListener('resize', findTarget);
-      window.removeEventListener('scroll', findTarget);
-    };
-  }, [isOnboarding, step]);
 
   if (!isOnboarding) return null;
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === steps.length - 1;
-  const hasTarget = !!step.targetSelector && !!targetRect;
-
-  // Calculate tooltip position
-  const getTooltipStyle = () => {
-    if (!targetRect) {
-      return {
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-      };
-    }
-
-    const padding = 16;
-    const tooltipWidth = 320;
-    const tooltipHeight = 200;
-
-    switch (step.position) {
-      case 'bottom':
-        return {
-          top: `${targetRect.bottom + padding}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-        };
-      case 'top':
-        return {
-          top: `${targetRect.top - tooltipHeight - padding}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-        };
-      case 'left':
-        return {
-          top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: `${targetRect.left - tooltipWidth - padding}px`,
-        };
-      case 'right':
-        return {
-          top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: `${targetRect.right + padding}px`,
-        };
-      default:
-        return {
-          top: `${targetRect.bottom + padding}px`,
-          left: `${targetRect.left + targetRect.width / 2 - tooltipWidth / 2}px`,
-        };
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -296,155 +249,99 @@ function OnboardingOverlay() {
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100]"
       >
-        {/* Backdrop with spotlight cutout */}
-        <svg className="absolute inset-0 w-full h-full">
-          <defs>
-            <mask id="spotlight-mask">
-              <rect x="0" y="0" width="100%" height="100%" fill="white" />
-              {targetRect && (
-                <rect
-                  x={targetRect.left - 8}
-                  y={targetRect.top - 8}
-                  width={targetRect.width + 16}
-                  height={targetRect.height + 16}
-                  rx="12"
-                  fill="black"
+        {/* Dark backdrop */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+
+        {/* Centered modal container */}
+        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ duration: 0.3, type: 'spring', damping: 25 }}
+            className="w-full max-w-sm sm:max-w-md bg-surface-800 border border-surface-700 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden"
+          >
+            {/* Header with icon */}
+            <div className="p-5 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                <div className="p-3 sm:p-4 bg-brand-500/20 rounded-xl sm:rounded-2xl text-brand-400 shrink-0">
+                  {step.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex justify-center gap-1.5 sm:gap-2 pb-4 sm:pb-5">
+              {steps.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToStep(index)}
+                  className={cn(
+                    'w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-200',
+                    index === currentStep 
+                      ? 'bg-brand-500 scale-125' 
+                      : 'bg-surface-600 hover:bg-surface-500'
+                  )}
                 />
-              )}
-            </mask>
-          </defs>
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="rgba(0, 0, 0, 0.75)"
-            mask="url(#spotlight-mask)"
-          />
-        </svg>
-
-        {/* Spotlight ring around target */}
-        {targetRect && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute pointer-events-none"
-            style={{
-              top: targetRect.top - 8,
-              left: targetRect.left - 8,
-              width: targetRect.width + 16,
-              height: targetRect.height + 16,
-            }}
-          >
-            <div className="absolute inset-0 rounded-xl border-2 border-brand-400 animate-pulse" />
-            <div className="absolute inset-0 rounded-xl bg-brand-400/10" />
-          </motion.div>
-        )}
-
-        {/* Arrow pointing to target */}
-        {targetRect && step.position === 'bottom' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute"
-            style={{
-              top: targetRect.bottom + 4,
-              left: targetRect.left + targetRect.width / 2 - 12,
-            }}
-          >
-            <div className="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[12px] border-b-brand-500" />
-          </motion.div>
-        )}
-
-        {/* Tooltip card */}
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className={cn(
-            'absolute w-80 bg-surface-800 border border-surface-700 rounded-2xl shadow-2xl overflow-hidden',
-            !hasTarget && 'max-w-md'
-          )}
-          style={getTooltipStyle()}
-        >
-          {/* Header with icon */}
-          <div className="p-6 pb-4">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-brand-500/20 rounded-xl text-brand-400 shrink-0">
-                {step.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-white mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
+              ))}
             </div>
-          </div>
 
-          {/* Progress dots */}
-          <div className="flex justify-center gap-1.5 pb-4">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'w-2 h-2 rounded-full transition-colors',
-                  index === currentStep ? 'bg-brand-500' : 'bg-surface-600'
-                )}
-              />
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-between p-4 bg-surface-900/50 border-t border-surface-700">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={skipOnboarding}
-              className="text-gray-400 hover:text-white"
-            >
-              {isLastStep ? 'Close' : 'Skip Tour'}
-            </Button>
-            
-            <div className="flex gap-2">
-              {!isFirstStep && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevStep}
-                  className="border-surface-600"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back
-                </Button>
-              )}
+            {/* Actions */}
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 p-4 sm:p-5 bg-surface-900/50 border-t border-surface-700">
               <Button
+                variant="ghost"
                 size="sm"
-                onClick={nextStep}
-                className="bg-brand-500 hover:bg-brand-600 text-white"
+                onClick={skipOnboarding}
+                className="text-gray-400 hover:text-white w-full sm:w-auto"
               >
-                {isLastStep ? (
-                  <>
-                    Get Started
-                    <Sparkles className="w-4 h-4 ml-1" />
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </>
-                )}
+                {isLastStep ? 'Close' : 'Skip Tour'}
               </Button>
+              
+              <div className="flex gap-2 w-full sm:w-auto">
+                {!isFirstStep && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevStep}
+                    className="border-surface-600 flex-1 sm:flex-none"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Back
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  onClick={nextStep}
+                  className="bg-brand-500 hover:bg-brand-600 text-white flex-1 sm:flex-none"
+                >
+                  {isLastStep ? (
+                    <>
+                      Get Started
+                      <Sparkles className="w-4 h-4 ml-1" />
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
 
-        {/* Skip hint at bottom */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+        {/* Skip hint at bottom - hidden on mobile */}
+        <div className="hidden sm:block absolute bottom-6 left-1/2 -translate-x-1/2">
           <p className="text-sm text-gray-500">
             Press <kbd className="px-2 py-0.5 bg-surface-700 rounded text-xs">ESC</kbd> to skip
           </p>
