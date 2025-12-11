@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Smartphone, ExternalLink, Download } from 'lucide-react';
+import { X, Smartphone, ExternalLink, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   isMobile,
@@ -13,6 +13,8 @@ import {
   openInSolflare,
   getStoreUrl,
   MOBILE_WALLETS,
+  isPhantomInstalled,
+  isSolflareInstalled,
   type MobileWallet,
 } from '@/lib/wallet/mobile-wallet-detect';
 
@@ -22,18 +24,36 @@ interface MobileWalletModalProps {
 }
 
 export function MobileWalletModal({ isOpen, onClose }: MobileWalletModalProps) {
-  const { select, wallets, connect } = useWallet();
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const { select, wallets, connect, connecting } = useWallet();
+  const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
 
+  // Try to connect directly if wallet is available (in-app browser)
+  const handleConnectWallet = useCallback(async (walletName: string) => {
+    // Find the wallet adapter
+    const walletAdapter = wallets.find(w => 
+      w.adapter.name.toLowerCase().includes(walletName.toLowerCase())
+    );
+
+    if (walletAdapter) {
+      try {
+        setConnectingWallet(walletName);
+        select(walletAdapter.adapter.name);
+        // Connection will happen automatically after select due to autoConnect
+        onClose();
+      } catch (error) {
+        console.error('Failed to connect:', error);
+        setConnectingWallet(null);
+      }
+    }
+  }, [wallets, select, onClose]);
+
+  // Open app via deep link (when not in wallet browser)
   const handleOpenInWallet = useCallback((wallet: MobileWallet) => {
-    setSelectedWallet(wallet.name);
-    
     if (wallet.name === 'Phantom') {
       openInPhantom();
     } else if (wallet.name === 'Solflare') {
       openInSolflare();
     } else {
-      // Generic fallback - open universal link
       window.location.href = `${wallet.universalLink}${encodeURIComponent(window.location.href)}`;
     }
   }, []);
@@ -42,7 +62,21 @@ export function MobileWalletModal({ isOpen, onClose }: MobileWalletModalProps) {
     window.open(getStoreUrl(wallet), '_blank');
   }, []);
 
+  // Check which wallets are installed (works in wallet browser)
+  const [installedWallets, setInstalledWallets] = useState<Record<string, boolean>>({});
+  
+  useEffect(() => {
+    if (isOpen) {
+      setInstalledWallets({
+        Phantom: isPhantomInstalled(),
+        Solflare: isSolflareInstalled(),
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const isInApp = isInWalletBrowser();
 
   return (
     <AnimatePresence>
@@ -69,7 +103,9 @@ export function MobileWalletModal({ isOpen, onClose }: MobileWalletModalProps) {
               </div>
               <div>
                 <h2 className="font-semibold text-white">Connect Wallet</h2>
-                <p className="text-xs text-gray-400">Choose your wallet app</p>
+                <p className="text-xs text-gray-400">
+                  {isInApp ? 'Select your wallet' : 'Open in wallet app'}
+                </p>
               </div>
             </div>
             <button
@@ -82,53 +118,84 @@ export function MobileWalletModal({ isOpen, onClose }: MobileWalletModalProps) {
 
           {/* Wallet Options */}
           <div className="p-4 space-y-3">
-            <p className="text-sm text-gray-400 mb-4">
-              Open PROVELT in your wallet&apos;s browser to connect:
-            </p>
+            {!isInApp && (
+              <p className="text-sm text-gray-400 mb-4">
+                Open PROVELT in your wallet&apos;s browser to connect:
+              </p>
+            )}
 
-            {MOBILE_WALLETS.map((wallet) => (
-              <div
-                key={wallet.name}
-                className="flex items-center justify-between p-3 bg-surface-800 rounded-xl hover:bg-surface-700 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-surface-700 rounded-xl flex items-center justify-center">
-                    <span className="text-lg font-bold text-white">
-                      {wallet.name.charAt(0)}
-                    </span>
+            {MOBILE_WALLETS.map((wallet) => {
+              const isInstalled = installedWallets[wallet.name];
+              const isConnecting = connectingWallet === wallet.name;
+              
+              return (
+                <div
+                  key={wallet.name}
+                  className="flex items-center justify-between p-3 bg-surface-800 rounded-xl hover:bg-surface-700 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-surface-700 rounded-xl flex items-center justify-center">
+                      <span className="text-lg font-bold text-white">
+                        {wallet.name === 'Phantom' ? '👻' : wallet.name === 'Solflare' ? '🔥' : wallet.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">{wallet.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {isInstalled ? 'Detected' : 'Solana Wallet'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-white">{wallet.name}</p>
-                    <p className="text-xs text-gray-400">Solana Wallet</p>
+                  
+                  <div className="flex gap-2">
+                    {isInApp && isInstalled ? (
+                      // In wallet browser with wallet detected - connect directly
+                      <Button
+                        size="sm"
+                        onClick={() => handleConnectWallet(wallet.name)}
+                        disabled={isConnecting || connecting}
+                        className="bg-brand-500 hover:bg-brand-600 text-white"
+                      >
+                        {isConnecting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Connect'
+                        )}
+                      </Button>
+                    ) : (
+                      // Not in wallet browser - open deep link
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleOpenInWallet(wallet)}
+                          className="bg-brand-500 hover:bg-brand-600 text-white"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-1" />
+                          Open
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownload(wallet)}
+                          className="border-surface-600"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleOpenInWallet(wallet)}
-                    className="bg-brand-500 hover:bg-brand-600 text-white"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Open
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDownload(wallet)}
-                    className="border-surface-600"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Footer tip */}
           <div className="p-4 bg-surface-800/50 border-t border-surface-700">
             <p className="text-xs text-gray-500 text-center">
-              💡 Tip: Install Phantom or Solflare for the best mobile experience
+              {isInApp 
+                ? '✨ You\'re in a wallet browser - tap Connect to continue'
+                : '💡 Tip: Install Phantom or Solflare for the best experience'
+              }
             </p>
           </div>
 

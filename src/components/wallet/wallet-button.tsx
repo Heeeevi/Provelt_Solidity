@@ -25,6 +25,17 @@ interface WalletButtonProps {
   showBalance?: boolean;
 }
 
+// Check if specific wallet is installed
+const isPhantomInstalled = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(window as any).phantom?.solana?.isPhantom;
+};
+
+const isSolflareInstalled = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(window as any).solflare?.isSolflare;
+};
+
 // Check if any Solana wallet is installed
 const hasWalletExtension = () => {
   if (typeof window === 'undefined') return false;
@@ -54,7 +65,7 @@ const WALLET_LINKS = {
 
 export function WalletButton({ className, showBalance = false }: WalletButtonProps) {
   const { setVisible } = useWalletModal();
-  const { connected, connecting, publicKey } = useWallet();
+  const { connected, connecting, publicKey, select, wallets } = useWallet();
   const { truncatedAddress, explorerUrl, disconnect, getBalance } = useSolanaWallet();
   const { 
     isMobileDevice, 
@@ -70,11 +81,27 @@ export function WalletButton({ className, showBalance = false }: WalletButtonPro
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [hasWallet, setHasWallet] = useState(true);
+  const [detectedWallets, setDetectedWallets] = useState<{phantom: boolean; solflare: boolean}>({ phantom: false, solflare: false });
 
   // Check for wallet on mount
   useEffect(() => {
     setHasWallet(hasWalletExtension());
+    setDetectedWallets({
+      phantom: isPhantomInstalled(),
+      solflare: isSolflareInstalled(),
+    });
   }, []);
+
+  // Direct connect to a specific wallet
+  const connectToWallet = useCallback((walletName: string) => {
+    const wallet = wallets.find(w => 
+      w.adapter.name.toLowerCase() === walletName.toLowerCase()
+    );
+    if (wallet) {
+      select(wallet.adapter.name);
+      setShowInstallModal(false);
+    }
+  }, [wallets, select]);
 
   const handleConnect = useCallback(() => {
     // On mobile - use mobile wallet modal
@@ -89,7 +116,7 @@ export function WalletButton({ className, showBalance = false }: WalletButtonPro
       return;
     }
     
-    // Default - show wallet adapter modal
+    // Default - show wallet adapter modal (which lists all detected wallets)
     setVisible(true);
   }, [openWalletConnect, isMobileDevice, isWalletBrowser, hasWallet, setVisible]);
 
@@ -116,8 +143,7 @@ export function WalletButton({ className, showBalance = false }: WalletButtonPro
     setBalance(null);
   }, [disconnect]);
 
-  // Install Modal Component
-  // Install Modal Component (for desktop when no wallet extension)
+  // Install Modal Component (for desktop - shows detected wallets or install links)
   const InstallWalletModal = () => (
     <AnimatePresence>
       {showInstallModal && (
@@ -144,47 +170,82 @@ export function WalletButton({ className, showBalance = false }: WalletButtonPro
                   <Download className="w-8 h-8 text-brand-400" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">
-                  Install Wallet Extension
+                  {hasWallet ? 'Select Wallet' : 'Install Wallet Extension'}
                 </h3>
                 <p className="text-surface-400 text-sm">
-                  Install a Solana wallet browser extension to connect.
+                  {hasWallet 
+                    ? 'Choose a wallet to connect with PROVELT'
+                    : 'Install a Solana wallet browser extension to connect.'
+                  }
                 </p>
               </div>
 
               <div className="space-y-3">
                 {/* Phantom Wallet */}
-                <a
-                  href={WALLET_LINKS.phantom.chrome}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
-                >
-                  <div className="w-12 h-12 bg-[#AB9FF2] rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">👻</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-white">Phantom</p>
-                    <p className="text-sm text-surface-400">Most popular Solana wallet</p>
-                  </div>
-                  <ExternalLink className="w-5 h-5 text-surface-400" />
-                </a>
+                {detectedWallets.phantom ? (
+                  <button
+                    onClick={() => connectToWallet('Phantom')}
+                    className="w-full flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-[#AB9FF2] rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">👻</span>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-white">Phantom</p>
+                      <p className="text-sm text-emerald-400">✓ Detected</p>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-surface-400 -rotate-90" />
+                  </button>
+                ) : (
+                  <a
+                    href={WALLET_LINKS.phantom.chrome}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-[#AB9FF2] rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">👻</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">Phantom</p>
+                      <p className="text-sm text-surface-400">Most popular Solana wallet</p>
+                    </div>
+                    <ExternalLink className="w-5 h-5 text-surface-400" />
+                  </a>
+                )}
 
                 {/* Solflare Wallet */}
-                <a
-                  href={WALLET_LINKS.solflare.chrome}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
-                >
-                  <div className="w-12 h-12 bg-[#FC822B] rounded-xl flex items-center justify-center">
-                    <span className="text-2xl">🔥</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-white">Solflare</p>
-                    <p className="text-sm text-surface-400">Feature-rich wallet</p>
-                  </div>
-                  <ExternalLink className="w-5 h-5 text-surface-400" />
-                </a>
+                {detectedWallets.solflare ? (
+                  <button
+                    onClick={() => connectToWallet('Solflare')}
+                    className="w-full flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-[#FC822B] rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">🔥</span>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-white">Solflare</p>
+                      <p className="text-sm text-emerald-400">✓ Detected</p>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-surface-400 -rotate-90" />
+                  </button>
+                ) : (
+                  <a
+                    href={WALLET_LINKS.solflare.chrome}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 p-4 bg-surface-700/50 hover:bg-surface-700 rounded-xl transition-colors"
+                  >
+                    <div className="w-12 h-12 bg-[#FC822B] rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">🔥</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-white">Solflare</p>
+                      <p className="text-sm text-surface-400">Feature-rich wallet</p>
+                    </div>
+                    <ExternalLink className="w-5 h-5 text-surface-400" />
+                  </a>
+                )}
               </div>
 
               <Button
