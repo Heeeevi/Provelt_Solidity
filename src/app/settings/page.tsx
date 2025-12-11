@@ -14,7 +14,8 @@ import {
   Globe,
   LogOut,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Rocket
 } from 'lucide-react';
 import { PageContainer, Header } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useOnboarding } from '@/components/onboarding';
 import { useSolanaWallet } from '@/hooks/use-solana-wallet';
 import { cn } from '@/lib/utils';
+import { ICM_LINKS } from '@/lib/icm';
 
 interface SettingItemProps {
   icon: React.ReactNode;
@@ -136,6 +138,28 @@ export default function SettingsPage() {
             label="Help Center"
             description="FAQs and support"
             onClick={() => window.open('https://provelt.app/help', '_blank')}
+          />
+        </SettingSection>
+
+        {/* ICM Integration */}
+        <SettingSection title="ICM Ecosystem">
+          <SettingItem
+            icon={<Rocket className="w-5 h-5 text-brand-500" />}
+            label="ICM Integration"
+            description="Internet Capital Markets"
+            onClick={() => router.push('/icm')}
+          />
+          <SettingItem
+            icon={<ExternalLink className="w-5 h-5 text-purple-400" />}
+            label="Believe.app"
+            description="Launch your project"
+            onClick={() => window.open('https://believe.app', '_blank')}
+          />
+          <SettingItem
+            icon={<ExternalLink className="w-5 h-5 text-green-400" />}
+            label="Apply to Incubator"
+            description="Get ICM support"
+            onClick={() => window.open(ICM_LINKS.apply, '_blank')}
           />
         </SettingSection>
 

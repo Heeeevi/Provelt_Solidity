@@ -4,13 +4,14 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Play, Award, Heart, TrendingUp } from 'lucide-react';
+import { Search, Play, Award, Heart, TrendingUp, Rocket } from 'lucide-react';
 import { PageContainer, Header } from '@/components/layout';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import { SubmissionViewer } from '@/components/feed/submission-viewer';
+import { ICMTokenCard } from '@/components/icm';
 import { useFeed } from '@/hooks/use-feed';
 import { useChallenges } from '@/hooks/use-challenges';
 import { cn } from '@/lib/utils';
@@ -97,7 +98,7 @@ export default function ExplorePage() {
                 className="flex-shrink-0"
               >
                 <Badge 
-                  variant="outline" 
+                  variant="outline"
                   className="px-3 py-1.5 bg-surface-800/50 border-surface-700 hover:border-brand-500 transition-colors"
                 >
                   {challenge.title}
@@ -107,6 +108,15 @@ export default function ExplorePage() {
           </div>
         </div>
       )}
+
+        {/* ICM Widget */}
+        {!searchQuery && (
+          <div className="px-4 pb-4">
+            <Link href="/icm">
+              <ICMTokenCard compact className="hover:border-brand-500/50 transition-colors" />
+            </Link>
+          </div>
+        )}
 
       {/* Content */}
       {isLoading ? (
