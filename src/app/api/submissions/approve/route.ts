@@ -3,16 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 import { mintCompressedNFT, createBadgeMetadata, uploadMetadata } from '@/lib/solana/mint';
 import { MERKLE_TREE_ADDRESS, COLLECTION_ADDRESS } from '@/lib/solana/config';
 
-// Create admin supabase client
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create supabase client with anon key (relies on RLS policies being set correctly)
+// For this to work, ensure your Supabase has proper RLS policies that allow:
+// - SELECT on submissions for authenticated users or public
+// - UPDATE on submissions for admins
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY && 
+  process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_service_role_key'
+  ? process.env.SUPABASE_SERVICE_ROLE_KEY 
+  : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { submissionId, action, rejectionReason } = body;
+
+    console.log('Approve API called:', { submissionId, action });
 
     if (!submissionId || !action) {
       return NextResponse.json(
@@ -35,9 +48,12 @@ export async function POST(request: NextRequest) {
       .eq('id', submissionId)
       .single();
 
+    console.log('Fetch result:', { submission: submission?.id, error: fetchError?.message });
+
     if (fetchError || !submission) {
+      console.error('Submission fetch error:', fetchError);
       return NextResponse.json(
-        { error: 'Submission not found' },
+        { error: 'Submission not found', details: fetchError?.message },
         { status: 404 }
       );
     }
