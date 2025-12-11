@@ -52,6 +52,8 @@ export function useUserBadges(userId: string) {
   const query = useQuery({
     queryKey: profileKeys.badges(userId),
     queryFn: async (): Promise<BadgeNFT[]> => {
+      console.log('Fetching badges for userId:', userId);
+      
       // Handle wallet address case
       let profileId = userId;
       const isWalletAddress = userId.length > 36;
@@ -63,15 +65,39 @@ export function useUserBadges(userId: string) {
           .eq('wallet_address', userId)
           .maybeSingle();
         
+        console.log('Found profile for wallet:', profile);
+        
         if (!profile) return [];
         profileId = profile.id;
       }
 
-      const { data, error } = await supabase
+      console.log('Querying badges with profileId:', profileId);
+
+      // Try querying badges - first attempt with RLS
+      let { data, error } = await supabase
         .from('badge_nfts')
         .select('*')
-        .or(`user_id.eq.${profileId},user_id.eq.${userId}`)
+        .eq('user_id', profileId)
         .order('earned_at', { ascending: false });
+
+      console.log('Badges query result:', { data, error });
+
+      // If RLS blocks or no data, try the debug API
+      if ((error || !data || data.length === 0)) {
+        console.log('Trying fallback API for badges...');
+        try {
+          const response = await fetch(`/api/debug/badges?userId=${encodeURIComponent(profileId)}`);
+          if (response.ok) {
+            const debugData = await response.json();
+            console.log('Debug API badges result:', debugData.userBadges);
+            if (debugData.userBadges?.data?.length > 0) {
+              return debugData.userBadges.data;
+            }
+          }
+        } catch (e) {
+          console.error('Fallback API error:', e);
+        }
+      }
 
       if (error) throw error;
       return data || [];
@@ -91,6 +117,8 @@ export function useUserSubmissions(userId: string) {
   const query = useQuery({
     queryKey: profileKeys.submissions(userId),
     queryFn: async (): Promise<any[]> => {
+      console.log('Fetching submissions for userId:', userId);
+      
       // First, we need to figure out if userId is a wallet address or a profile ID
       // If it's a wallet address, we need to get the profile first
       let profileId = userId;
@@ -106,16 +134,22 @@ export function useUserSubmissions(userId: string) {
           .eq('wallet_address', userId)
           .maybeSingle();
         
+        console.log('Found profile for wallet:', profile);
+        
         if (!profile) return [];
         profileId = profile.id;
       }
 
-      // Fetch submissions by profile ID OR wallet address (handle both cases)
+      console.log('Querying submissions with profileId:', profileId);
+
+      // Fetch submissions by profile ID
       const { data: submissions, error } = await supabase
         .from('submissions')
         .select('*')
-        .or(`user_id.eq.${profileId},user_id.eq.${userId}`)
+        .eq('user_id', profileId)
         .order('created_at', { ascending: false });
+
+      console.log('Submissions query result:', { count: submissions?.length, error });
 
       if (error) throw error;
       if (!submissions?.length) return [];

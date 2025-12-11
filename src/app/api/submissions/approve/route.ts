@@ -194,16 +194,29 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole operation
     }
 
-    // Update user stats
-    const { error: statsError } = await supabaseAdmin.rpc('increment_user_stats', {
-      p_user_id: submission.user_id,
-      p_points: challenge.points,
-      p_badges: 1,
-      p_submissions: 0, // Already counted when submitted
-    });
-
-    if (statsError) {
-      console.error('Stats update error:', statsError);
+    // Update user stats manually instead of using RPC function
+    try {
+      // First get current stats
+      const { data: currentProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('total_points, badges_count, submissions_count')
+        .eq('id', submission.user_id)
+        .single();
+      
+      if (currentProfile) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({
+            total_points: (currentProfile.total_points || 0) + challenge.points,
+            badges_count: (currentProfile.badges_count || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', submission.user_id);
+        
+        console.log('Stats updated successfully for user:', submission.user_id);
+      }
+    } catch (statsErr) {
+      console.error('Stats update error:', statsErr);
       // Don't fail the whole operation
     }
 
