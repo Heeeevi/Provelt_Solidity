@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Share2, Award, MoreHorizontal, Play } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,12 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { SkeletonCard, SkeletonAvatar, SkeletonText } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
+import { ShareModal } from '@/components/ui/share-modal';
 import { cn, formatRelativeTime, truncateAddress } from '@/lib/utils';
+import { getSubmissionShareUrl } from '@/lib/share';
 import type { FeedItem } from '@/lib/database.types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Target } from 'lucide-react';
-import { useState } from 'react';
 
 interface SocialFeedProps {
   items: FeedItem[];
@@ -124,6 +125,7 @@ function FeedPost({ item }: { item: FeedItem }) {
   const { submission, profile, challenge } = item;
   const [liked, setLiked] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const isVideo = submission.media_type === 'video';
   const displayName = profile?.display_name || profile?.username || truncateAddress(submission.user_id);
@@ -132,8 +134,20 @@ function FeedPost({ item }: { item: FeedItem }) {
   const caption = submission.caption || '';
   const shouldTruncate = caption.length > 150;
 
+  const shareUrl = getSubmissionShareUrl(submission.id);
+  const shareText = `Check out ${displayName}'s proof for "${challenge?.title || 'a challenge'}" on PROVELT! 🏆`;
+
   return (
     <article className="bg-surface-950">
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`${challenge?.title || 'Submission'} - PROVELT`}
+        text={shareText}
+        url={shareUrl}
+      />
+
       {/* Post Header */}
       <div className="flex items-center justify-between p-3">
         <Link href={`/profile/${submission.user_id}`} className="flex items-center gap-3">
@@ -213,7 +227,10 @@ function FeedPost({ item }: { item: FeedItem }) {
             <button className="transition-transform active:scale-90">
               <MessageCircle className="w-6 h-6 text-white hover:text-surface-300" />
             </button>
-            <button className="transition-transform active:scale-90">
+            <button 
+              onClick={() => setShowShareModal(true)}
+              className="transition-transform active:scale-90"
+            >
               <Share2 className="w-6 h-6 text-white hover:text-surface-300" />
             </button>
           </div>

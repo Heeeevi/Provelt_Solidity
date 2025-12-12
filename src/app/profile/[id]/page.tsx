@@ -25,9 +25,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SkeletonCard, SkeletonAvatar, SkeletonText } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
+import { ShareModal } from '@/components/ui/share-modal';
 import { useProfile, useUserBadges, useUserSubmissions } from '@/hooks/use-profile';
 import { useAuth } from '@/components/providers/auth-provider';
 import { cn, formatShortDate, truncateAddress } from '@/lib/utils';
+import { getProfileShareUrl } from '@/lib/share';
 
 /**
  * Profile Page
@@ -43,6 +45,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   
   const [activeTab, setActiveTab] = useState('badges');
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const isOwnProfile = currentUserId === userId;
 
@@ -110,6 +113,15 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
 
   return (
     <PageContainer>
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`${profile.display_name || 'User'} on PROVELT`}
+        text={`Check out ${profile.display_name || 'this user'}'s profile on PROVELT! ${profile.badges_count || 0} badges earned 🏅`}
+        url={getProfileShareUrl(userId)}
+      />
+
       <Header 
         title={isOwnProfile ? 'My Profile' : profile.display_name || 'Profile'}
         leftAction={
@@ -125,7 +137,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               </Button>
             </Link>
           ) : (
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => setShowShareModal(true)}>
               <Share2 className="w-5 h-5" />
             </Button>
           )

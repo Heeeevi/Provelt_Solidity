@@ -12,17 +12,17 @@ const inter = Inter({
 const LOGO_URL = 'https://res.cloudinary.com/dtgqtofh6/image/upload/v1765375868/Refine_to_hd_202512102109_ef1imb.jpg';
 
 export const metadata: Metadata = {
-  title: 'PROVELT - Prove Your Skills, Earn Your Badges',
-  description: 'A Web3 social skill-challenge platform where you complete daily challenges, mint NFT badges, and build your on-chain reputation.',
-  keywords: ['Web3', 'NFT', 'Solana', 'Skills', 'Challenges', 'Social'],
+  title: 'PROVELT - Turn Your Skills Into Income | Verified Proof Platform',
+  description: 'Monetize your skills with verified proof. Complete challenges in coding, trading, design, fitness & more. Build your portfolio, earn badges, and get discovered by clients and employers.',
+  keywords: ['Skill monetization', 'Verified portfolio', 'Proof of skills', 'Freelance', 'Personal branding', 'NFT badges', 'Trading proof', 'Coding challenges', 'Web3', 'Solana'],
   authors: [{ name: 'PROVELT Team' }],
   icons: {
     icon: LOGO_URL,
     apple: LOGO_URL,
   },
   openGraph: {
-    title: 'PROVELT - Prove Your Skills, Earn Your Badges',
-    description: 'Complete daily skill challenges and mint NFT badges on Solana',
+    title: 'PROVELT - Your Skills Have Value. Prove It. Get Paid.',
+    description: 'Monetize any skill with verified proof. Complete challenges, build your portfolio, and unlock opportunities.',
     type: 'website',
     locale: 'en_US',
     images: [
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PROVELT',
-    description: 'Prove Your Skills, Earn Your Badges',
+    title: 'PROVELT - Turn Your Skills Into Income',
+    description: 'Your Skills Have Value. Prove It. Get Paid.',
     images: [LOGO_URL],
   },
   manifest: '/manifest.json',

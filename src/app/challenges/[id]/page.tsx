@@ -25,9 +25,11 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
+import { ShareModal } from '@/components/ui/share-modal';
 import { useChallenge, useChallengeSubmissions } from '@/hooks/use-challenges';
 import { useUserStore } from '@/stores/user-store';
 import { cn, formatTimeRemaining } from '@/lib/utils';
+import { getChallengeShareUrl } from '@/lib/share';
 
 /**
  * Single Challenge Page
@@ -40,6 +42,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
   const { challenge, isLoading, error, refetch } = useChallenge(challengeId);
   const { submissions, isLoading: submissionsLoading } = useChallengeSubmissions(challengeId);
   const [activeTab, setActiveTab] = useState('about');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Calculate time remaining
   const getTimeRemaining = () => {
@@ -98,6 +101,15 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
 
   return (
     <PageContainer>
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={`${challenge.title} - PROVELT Challenge`}
+        text={`Can you complete this challenge? "${challenge.title}" - Earn ${challenge.points} points and an NFT badge! 🎯`}
+        url={getChallengeShareUrl(challengeId)}
+      />
+
       <Header 
         title={challenge.title}
         leftAction={
@@ -106,7 +118,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
           </Button>
         }
         rightAction={
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={() => setShowShareModal(true)}>
             <Share2 className="w-5 h-5" />
           </Button>
         }

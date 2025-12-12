@@ -7,8 +7,8 @@ export const LOGO_URL = 'https://res.cloudinary.com/dtgqtofh6/image/upload/v1765
 
 // App Info
 export const APP_NAME = 'PROVELT';
-export const APP_TAGLINE = 'Prove Your Skills, Earn Your Badges';
-export const APP_DESCRIPTION = 'Complete daily skill challenges, upload your proof, and mint compressed NFT badges on Solana.';
+export const APP_TAGLINE = 'Your Skills Have Value. Prove It. Get Paid.';
+export const APP_DESCRIPTION = 'Monetize your skills with verified proof. Complete challenges, build your portfolio, and unlock opportunities.';
 
 // Social Links (optional)
 export const SOCIAL_LINKS = {
