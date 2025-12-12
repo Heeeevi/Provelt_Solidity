@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Share2, Award, MoreHorizontal, Play } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,6 +12,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { ShareModal } from '@/components/ui/share-modal';
 import { cn, formatRelativeTime, truncateAddress } from '@/lib/utils';
 import { getSubmissionShareUrl } from '@/lib/share';
+import { useAuth } from '@/components/providers/auth-provider';
+import { supabase } from '@/lib/supabase/client';
 import type { FeedItem } from '@/lib/database.types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -123,7 +125,10 @@ export function SocialFeed({
 // Individual Feed Post Component (Instagram/Threads style)
 function FeedPost({ item }: { item: FeedItem }) {
   const { submission, profile, challenge } = item;
+  const { user } = useAuth();
   const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(submission.reactions_count || 0);
+  const [isLiking, setIsLiking] = useState(false);
   const [showFullCaption, setShowFullCaption] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   
@@ -136,6 +141,58 @@ function FeedPost({ item }: { item: FeedItem }) {
 
   const shareUrl = getSubmissionShareUrl(submission.id);
   const shareText = `Check out ${displayName}'s proof for "${challenge?.title || 'a challenge'}" on PROVELT! 🏆`;
+
+  // Check if user has liked this submission
+  useEffect(() => {
+    async function checkLikeStatus() {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('reactions')
+        .select('id')
+        .eq('submission_id', submission.id)
+        .eq('user_id', user.id)
+        .eq('reaction_type', 'like')
+        .single();
+      
+      setLiked(!!data);
+    }
+    
+    checkLikeStatus();
+  }, [user, submission.id]);
+
+  // Handle like/unlike
+  const handleLike = async () => {
+    if (!user || isLiking) return;
+    
+    setIsLiking(true);
+    const newLiked = !liked;
+    
+    // Optimistic update
+    setLiked(newLiked);
+    setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+    
+    try {
+      if (newLiked) {
+        await supabase.from('reactions').insert({
+          submission_id: submission.id,
+          user_id: user.id,
+          reaction_type: 'like',
+        });
+      } else {
+        await supabase.from('reactions').delete()
+          .eq('submission_id', submission.id)
+          .eq('user_id', user.id)
+          .eq('reaction_type', 'like');
+      }
+    } catch (err) {
+      // Revert on error
+      setLiked(!newLiked);
+      setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   return (
     <article className="bg-surface-950">
@@ -214,8 +271,13 @@ function FeedPost({ item }: { item: FeedItem }) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setLiked(!liked)}
-              className="transition-transform active:scale-90"
+              onClick={handleLike}
+              disabled={!user || isLiking}
+              className={cn(
+                "transition-transform active:scale-90",
+                !user && "opacity-50 cursor-not-allowed"
+              )}
+              title={!user ? "Login to like" : (liked ? "Unlike" : "Like")}
             >
               <Heart 
                 className={cn(
@@ -246,7 +308,7 @@ function FeedPost({ item }: { item: FeedItem }) {
 
         {/* Likes count */}
         <p className="text-sm font-semibold text-white mb-1">
-          {submission.reactions_count || 0} likes
+          {likesCount} likes
         </p>
 
         {/* Caption */}

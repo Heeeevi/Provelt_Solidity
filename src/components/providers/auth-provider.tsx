@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { resetFeedSeed } from '@/hooks/use-feed';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -79,10 +80,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for Supabase auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Reset feed seed on sign in/out to get new random order
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          resetFeedSeed();
+        }
       }
     );
 
@@ -101,6 +107,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signOut = async () => {
+    // Reset feed seed for new random order on next login
+    resetFeedSeed();
+    
     // Sign out from Supabase
     await supabase.auth.signOut();
     setUser(null);

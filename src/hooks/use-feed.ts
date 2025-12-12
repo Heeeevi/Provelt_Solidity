@@ -6,10 +6,43 @@ import type { FeedItem } from '@/lib/database.types';
 
 const PAGE_SIZE = 10;
 
+// Generate a session seed for random ordering (stays same during session)
+function getSessionSeed(): number {
+  if (typeof window === 'undefined') return Date.now();
+  
+  let seed = sessionStorage.getItem('feed_seed');
+  if (!seed) {
+    seed = Date.now().toString();
+    sessionStorage.setItem('feed_seed', seed);
+  }
+  return parseInt(seed, 10);
+}
+
+// Simple seeded random for shuffling
+function seededRandom(seed: number): () => number {
+  return function() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+}
+
+// Shuffle array with seed
+function shuffleWithSeed<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  const random = seededRandom(seed);
+  
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  
+  return shuffled;
+}
+
 // Query keys
 export const feedKeys = {
   all: ['feed'] as const,
-  list: (filter?: string) => [...feedKeys.all, 'list', filter] as const,
+  list: (filter?: string, seed?: number) => [...feedKeys.all, 'list', filter, seed] as const,
   user: (userId: string) => [...feedKeys.all, 'user', userId] as const,
 };
 
@@ -45,37 +78,37 @@ async function enrichSubmissions(submissions: any[]): Promise<FeedItem[]> {
   }));
 }
 
-// Fetch feed with infinite scroll
+// Fetch feed with infinite scroll and random ordering per session
 export function useFeed(filter?: string) {
+  const sessionSeed = typeof window !== 'undefined' ? getSessionSeed() : Date.now();
+  
   const query = useInfiniteQuery({
-    queryKey: feedKeys.list(filter),
-    queryFn: async ({ pageParam }): Promise<{ items: FeedItem[]; nextCursor: string | null }> => {
-      let q = supabase
+    queryKey: feedKeys.list(filter, sessionSeed),
+    queryFn: async ({ pageParam }): Promise<{ items: FeedItem[]; nextCursor: number | null }> => {
+      const offset = pageParam || 0;
+      
+      // Fetch all submissions for randomization (or a larger batch)
+      const { data, error } = await supabase
         .from('submissions')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(PAGE_SIZE);
+        .range(offset, offset + PAGE_SIZE - 1);
 
-      // Filter by status - show approved OR pending for now (to see submissions)
-      // In production, you might want .eq('status', 'approved')
-      
-      if (pageParam) {
-        q = q.lt('created_at', pageParam);
-      }
-
-      const { data, error } = await q;
       if (error) throw error;
 
       // Enrich with profile and challenge data
-      const items = await enrichSubmissions(data || []);
+      let items = await enrichSubmissions(data || []);
+      
+      // Shuffle items with session seed (only for first page to maintain consistency)
+      if (offset === 0) {
+        items = shuffleWithSeed(items, sessionSeed);
+      }
 
-      const nextCursor = items.length === PAGE_SIZE 
-        ? items[items.length - 1].submission.created_at 
-        : null;
+      const nextCursor = items.length === PAGE_SIZE ? offset + PAGE_SIZE : null;
 
       return { items, nextCursor };
     },
-    initialPageParam: null as string | null,
+    initialPageParam: 0 as number | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
@@ -164,4 +197,11 @@ export function useUnlikeSubmission() {
       queryClient.invalidateQueries({ queryKey: feedKeys.all });
     },
   });
+}
+
+// Reset feed seed - call this on login/logout to get new random order
+export function resetFeedSeed() {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('feed_seed');
+  }
 }
