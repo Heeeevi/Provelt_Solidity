@@ -14,8 +14,7 @@ interface WalletButtonProps {
 }
 
 /**
- * Wallet connect button using RainbowKit
- * Migrated from Solana wallet adapters to EVM/Mantle
+ * Wallet connect button using RainbowKit for Mantle Network
  */
 export function WalletButton({ className, showBalance = false }: WalletButtonProps) {
   const { connected, connecting, isCorrectNetwork } = useMantleWallet();

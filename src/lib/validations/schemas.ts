@@ -379,8 +379,7 @@ export const EvmAddressSchema = z
   .length(42, 'EVM address must be 42 characters')
   .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address');
 
-// Alias for backwards compatibility
-export const SolanaAddressSchema = EvmAddressSchema;
+
 
 // Validate transaction hash
 export const TxHashSchema = z
