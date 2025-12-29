@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Mail, 
-  Wallet, 
+import {
+  Mail,
+  Wallet,
   ChevronLeft,
   Loader2,
   AlertCircle,
@@ -29,8 +29,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase/client';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useAccount } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { LOGO_URL, APP_NAME } from '@/lib/constants';
 
 /**
@@ -48,9 +48,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
-  
-  const { publicKey, connected } = useWallet();
-  const { setVisible } = useWalletModal();
+
+  const { address, isConnected: connected } = useAccount();
+  const { openConnectModal } = useConnectModal();
 
   // Handle email + password login
   const handleLogin = async (e: React.FormEvent) => {
@@ -139,18 +139,18 @@ export default function LoginPage() {
   // Handle wallet login
   const handleWalletLogin = async () => {
     setError(null);
-    
+
     if (!connected) {
       try {
-        setVisible(true);
+        openConnectModal?.();
         setShowWalletModal(false);
       } catch (err) {
-        setError('Failed to open wallet. Make sure you have a Solana wallet installed.');
+        setError('Failed to open wallet. Make sure you have a crypto wallet installed.');
       }
       return;
     }
 
-    if (publicKey) {
+    if (address) {
       router.push('/feed');
     }
   };
@@ -159,7 +159,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-surface-950 flex items-center justify-center p-4">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-500/10 via-transparent to-transparent" />
-      
+
       {/* Wallet Login Modal */}
       <AnimatePresence>
         {showWalletModal && (
@@ -172,7 +172,7 @@ export default function LoginPage() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
               onClick={() => setShowWalletModal(false)}
             />
-            
+
             {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -188,23 +188,23 @@ export default function LoginPage() {
                   >
                     <X className="w-5 h-5" />
                   </button>
-                  
+
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
                     <Wallet className="w-8 h-8 text-white" />
                   </div>
-                  
+
                   <CardTitle className="text-xl">Connect Wallet</CardTitle>
                   <CardDescription>
-                    Use your Solana wallet for Web3 features
+                    Connect your wallet for Web3 features
                   </CardDescription>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-4">
                   {/* Benefits */}
                   <div className="space-y-2 p-3 rounded-lg bg-surface-800/50">
                     <div className="flex items-center gap-2 text-sm text-surface-300">
                       <Zap className="w-4 h-4 text-amber-500" />
-                      <span>Mint NFT badges on Solana</span>
+                      <span>Mint NFT badges on Mantle</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-surface-300">
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -215,16 +215,16 @@ export default function LoginPage() {
                       <span>Trade & showcase your badges</span>
                     </div>
                   </div>
-                  
+
                   {/* Connect Button */}
                   <Button
                     className="w-full h-12"
                     onClick={handleWalletLogin}
                   >
                     <Wallet className="w-4 h-4 mr-2" />
-                    {connected ? `Connected: ${publicKey?.toString().slice(0, 8)}...` : 'Connect Wallet'}
+                    {connected ? `Connected: ${address?.slice(0, 8)}...` : 'Connect Wallet'}
                   </Button>
-                  
+
                   {/* Skip */}
                   <button
                     onClick={() => setShowWalletModal(false)}
@@ -270,8 +270,8 @@ export default function LoginPage() {
               {isSignUp ? 'Create Account' : 'Welcome Back!'}
             </CardTitle>
             <CardDescription>
-              {isSignUp 
-                ? 'Sign up free and start proving your skills' 
+              {isSignUp
+                ? 'Sign up free and start proving your skills'
                 : 'Sign in to continue your journey'}
             </CardDescription>
           </CardHeader>
@@ -368,8 +368,8 @@ export default function LoginPage() {
               )}
 
               {/* Submit Button */}
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full h-12 text-base"
                 disabled={isLoading || !email || !password || (isSignUp && !confirmPassword)}
               >
@@ -426,7 +426,7 @@ export default function LoginPage() {
             </div>
 
             {/* Wallet Option - Now a Card */}
-            <div 
+            <div
               onClick={() => setShowWalletModal(true)}
               className="p-4 rounded-xl border border-surface-700 bg-gradient-to-r from-surface-800/50 to-surface-800/30 hover:border-brand-500/50 hover:from-brand-500/10 hover:to-purple-500/10 transition-all cursor-pointer group"
             >
@@ -439,7 +439,7 @@ export default function LoginPage() {
                     Connect with Wallet
                   </p>
                   <p className="text-xs text-surface-500">
-                    Use Phantom, Solflare, or other Solana wallets
+                    Use MetaMask, WalletConnect, or other EVM wallets
                   </p>
                 </div>
                 <Sparkles className="w-5 h-5 text-surface-600 group-hover:text-brand-400 transition-colors" />

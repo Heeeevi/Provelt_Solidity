@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
   HelpCircle,
   Sparkles,
@@ -23,7 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useOnboarding } from '@/components/onboarding';
-import { useSolanaWallet } from '@/hooks/use-solana-wallet';
+import { useMantleWallet } from '@/hooks/use-solana-wallet';
 import { cn } from '@/lib/utils';
 import { ICM_LINKS } from '@/lib/icm';
 
@@ -84,9 +84,9 @@ function SettingSection({ title, children }: { title: string; children: React.Re
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { disconnect } = useSolanaWallet();
+  const { disconnect } = useMantleWallet();
   const { startOnboarding } = useOnboarding();
-  
+
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
 
@@ -111,7 +111,7 @@ export default function SettingsPage() {
 
   return (
     <PageContainer>
-      <Header 
+      <Header
         title="Settings"
         leftAction={
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -192,7 +192,7 @@ export default function SettingsPage() {
             icon={<Globe className="w-5 h-5 text-emerald-400" />}
             label="Language"
             description="English"
-            onClick={() => {}}
+            onClick={() => { }}
           />
         </SettingSection>
 
@@ -230,7 +230,7 @@ export default function SettingsPage() {
         {/* App Info */}
         <div className="text-center pt-4">
           <p className="text-sm text-surface-500">PROVELT v1.0.0</p>
-          <p className="text-xs text-surface-600 mt-1">Built on Solana</p>
+          <p className="text-xs text-surface-600 mt-1">Built on Mantle</p>
         </div>
       </motion.div>
     </PageContainer>

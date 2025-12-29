@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { mintCompressedNFT, createBadgeMetadata, uploadMetadata } from '@/lib/solana/mint';
-import { MERKLE_TREE_ADDRESS, COLLECTION_ADDRESS } from '@/lib/solana/config';
+import { ethers } from 'ethers';
+import {
+  BADGE_CONTRACT_ADDRESS,
+  MANTLE_RPC_URL,
+  PROVELT_BADGE_ABI,
+  getExplorerUrl,
+  createProofHash,
+} from '@/lib/mantle';
 
-// Create supabase client with anon key (relies on RLS policies being set correctly)
-// For this to work, ensure your Supabase has proper RLS policies that allow:
-// - SELECT on submissions for authenticated users or public
-// - UPDATE on submissions for admins
+// Create supabase client 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY && 
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY &&
   process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_service_role_key'
-  ? process.env.SUPABASE_SERVICE_ROLE_KEY 
+  ? process.env.SUPABASE_SERVICE_ROLE_KEY
   : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
@@ -19,6 +22,16 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: false,
   }
 });
+
+// Check if contract minting is configured
+function isMintingConfigured(): boolean {
+  return !!(
+    BADGE_CONTRACT_ADDRESS &&
+    BADGE_CONTRACT_ADDRESS.startsWith('0x') &&
+    process.env.TREASURY_PRIVATE_KEY &&
+    !process.env.TREASURY_PRIVATE_KEY.startsWith('your_')
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,9 +99,9 @@ export async function POST(request: NextRequest) {
     }
 
     // === APPROVE FLOW ===
-    
+
     // Get user's wallet address
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('wallet_address')
       .eq('id', submission.user_id)
@@ -96,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     // Try to get wallet from profile, or use user_id if it's a wallet address
     let walletAddress = profile?.wallet_address;
-    if (!walletAddress && submission.user_id.length > 36) {
+    if (!walletAddress && submission.user_id.startsWith('0x')) {
       // user_id might be the wallet address itself
       walletAddress = submission.user_id;
     }
@@ -111,45 +124,93 @@ export async function POST(request: NextRequest) {
     const challenge = submission.challenges;
 
     // Prepare badge metadata
-    const badgeMetadata = createBadgeMetadata({
-      challengeTitle: challenge.title,
-      challengeCategory: challenge.category,
-      difficulty: challenge.difficulty,
-      completedAt: new Date().toISOString(),
-      imageUrl: challenge.badge_image_url || 'https://provelt.app/badge-default.png',
-      creatorAddress: walletAddress,
-    });
+    const badgeMetadata = {
+      name: `PROVELT: ${challenge.title}`,
+      description: `Badge earned for completing "${challenge.title}" on PROVELT.`,
+      image: challenge.badge_image_url || 'https://provelt.app/badge-default.png',
+      attributes: [
+        { trait_type: 'Challenge', value: challenge.title },
+        { trait_type: 'Category', value: challenge.category },
+        { trait_type: 'Difficulty', value: challenge.difficulty },
+        { trait_type: 'Completed', value: new Date().toISOString() },
+        { trait_type: 'Platform', value: 'PROVELT' },
+        { trait_type: 'Network', value: 'Mantle' },
+        { trait_type: 'Points', value: challenge.points },
+      ],
+    };
 
-    // Upload metadata (placeholder - would use IPFS in production)
-    const metadataUri = await uploadMetadata(badgeMetadata);
+    // Create metadata URI (base64 encoded JSON)
+    const metadataJson = JSON.stringify(badgeMetadata);
+    const metadataUri = `data:application/json;base64,${Buffer.from(metadataJson).toString('base64')}`;
 
-    let mintResult: { success: boolean; signature?: string; assetId?: string; error?: string } = { 
-      success: false, 
-      signature: '', 
-      assetId: '' 
+    let mintResult: { success: boolean; transactionHash?: string; tokenId?: string; error?: string } = {
+      success: false,
+      transactionHash: '',
+      tokenId: ''
     };
 
     // Try to mint NFT if config is available
-    if (MERKLE_TREE_ADDRESS && COLLECTION_ADDRESS && process.env.TREASURY_PRIVATE_KEY) {
-      mintResult = await mintCompressedNFT({
-        recipientAddress: walletAddress,
-        merkleTreeAddress: MERKLE_TREE_ADDRESS.toBase58(),
-        collectionAddress: COLLECTION_ADDRESS.toBase58(),
-        metadata: badgeMetadata,
-        treasuryPrivateKey: process.env.TREASURY_PRIVATE_KEY,
-      });
+    if (isMintingConfigured()) {
+      try {
+        const provider = new ethers.JsonRpcProvider(MANTLE_RPC_URL);
+        const wallet = new ethers.Wallet(process.env.TREASURY_PRIVATE_KEY!, provider);
+        const contract = new ethers.Contract(BADGE_CONTRACT_ADDRESS, PROVELT_BADGE_ABI, wallet);
 
-      if (!mintResult.success) {
-        console.error('Mint failed:', mintResult.error);
+        // Create proof hash
+        const proofHash = createProofHash(
+          submission.challenge_id,
+          submission.user_id,
+          submissionId,
+          Date.now()
+        );
+
+        // Convert challengeId to uint256
+        const challengeIdNum = ethers.toBigInt(ethers.keccak256(ethers.toUtf8Bytes(submission.challenge_id)));
+
+        // Mint the badge
+        const tx = await contract.mintBadge(
+          walletAddress,
+          challengeIdNum,
+          proofHash,
+          metadataUri
+        );
+
+        const receipt = await tx.wait();
+
+        // Get tokenId from event logs
+        let tokenId = '0';
+        for (const log of receipt.logs) {
+          try {
+            const parsed = contract.interface.parseLog(log);
+            if (parsed?.name === 'BadgeMinted') {
+              tokenId = parsed.args.tokenId.toString();
+              break;
+            }
+          } catch {
+            // Not a matching event
+          }
+        }
+
+        mintResult = {
+          success: true,
+          transactionHash: receipt.hash,
+          tokenId,
+        };
+      } catch (mintError: any) {
+        console.error('Mint failed:', mintError);
         // Continue anyway - we'll record it without NFT for now
+        mintResult = {
+          success: false,
+          error: mintError.message,
+        };
       }
     } else {
-      console.log('NFT minting not configured - skipping mint');
+      console.log('NFT minting not configured - using placeholder');
       // Generate placeholder data for testing
       mintResult = {
         success: true,
-        signature: `sim_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        assetId: `asset_${submissionId}`,
+        transactionHash: `sim_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        tokenId: `token_${submissionId.slice(0, 8)}`,
       };
     }
 
@@ -158,9 +219,9 @@ export async function POST(request: NextRequest) {
       .from('submissions')
       .update({
         status: 'approved',
-        nft_mint_address: mintResult.assetId || null,
+        nft_mint_address: BADGE_CONTRACT_ADDRESS || null,
         nft_metadata_uri: metadataUri,
-        nft_tx_signature: mintResult.signature || null,
+        nft_tx_signature: mintResult.transactionHash || null,
         minted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -175,9 +236,9 @@ export async function POST(request: NextRequest) {
         user_id: submission.user_id,
         submission_id: submissionId,
         challenge_id: submission.challenge_id,
-        mint_address: mintResult.assetId || `pending_${submissionId}`,
+        mint_address: BADGE_CONTRACT_ADDRESS || `pending_${submissionId}`,
         metadata_uri: metadataUri,
-        tx_signature: mintResult.signature || 'pending',
+        tx_signature: mintResult.transactionHash || 'pending',
         name: challenge.badge_name || `${challenge.title} Badge`,
         description: `Badge earned for completing "${challenge.title}"`,
         image_url: challenge.badge_image_url || 'https://provelt.app/badge-default.png',
@@ -186,23 +247,22 @@ export async function POST(request: NextRequest) {
           category: challenge.category,
           difficulty: challenge.difficulty,
           points: challenge.points,
+          tokenId: mintResult.tokenId,
         },
       });
 
     if (badgeError) {
       console.error('Badge creation error:', badgeError);
-      // Don't fail the whole operation
     }
 
-    // Update user stats manually instead of using RPC function
+    // Update user stats
     try {
-      // First get current stats
       const { data: currentProfile } = await supabaseAdmin
         .from('profiles')
-        .select('total_points, badges_count, submissions_count')
+        .select('total_points, badges_count')
         .eq('id', submission.user_id)
         .single();
-      
+
       if (currentProfile) {
         await supabaseAdmin
           .from('profiles')
@@ -212,12 +272,9 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq('id', submission.user_id);
-        
-        console.log('Stats updated successfully for user:', submission.user_id);
       }
     } catch (statsErr) {
       console.error('Stats update error:', statsErr);
-      // Don't fail the whole operation
     }
 
     // Update challenge completion count
@@ -232,8 +289,10 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Submission approved and badge minted',
       data: {
-        mintAddress: mintResult.assetId,
-        txSignature: mintResult.signature,
+        contractAddress: BADGE_CONTRACT_ADDRESS,
+        tokenId: mintResult.tokenId,
+        txHash: mintResult.transactionHash,
+        explorerUrl: mintResult.transactionHash ? getExplorerUrl(mintResult.transactionHash, 'tx') : null,
         metadataUri,
         pointsAwarded: challenge.points,
       },

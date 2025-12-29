@@ -1,74 +1,100 @@
 'use client';
 
-import { useMemo, useCallback, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import {
-  ConnectionProvider,
-  WalletProvider as SolanaWalletProvider,
-} from '@solana/wallet-adapter-react';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import {
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  TorusWalletAdapter,
-  LedgerWalletAdapter,
-  CoinbaseWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+  RainbowKitProvider,
+  getDefaultConfig,
+  darkTheme,
+} from '@rainbow-me/rainbowkit';
+import { WagmiProvider } from 'wagmi';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { mantleSepoliaTestnet, mantle } from 'wagmi/chains';
 
-// Import wallet adapter styles
-import '@solana/wallet-adapter-react-ui/styles.css';
+import '@rainbow-me/rainbowkit/styles.css';
+
+// Custom Mantle Sepolia if not available in wagmi
+const mantleSepolia = {
+  id: 5003,
+  name: 'Mantle Sepolia',
+  network: 'mantle-sepolia',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'MNT',
+    symbol: 'MNT',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc.sepolia.mantle.xyz'],
+    },
+    public: {
+      http: ['https://rpc.sepolia.mantle.xyz'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Mantlescan', url: 'https://sepolia.mantlescan.xyz' },
+  },
+  testnet: true,
+} as const;
+
+// Custom Mantle Mainnet
+const mantleMainnet = {
+  id: 5000,
+  name: 'Mantle',
+  network: 'mantle',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'MNT',
+    symbol: 'MNT',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc.mantle.xyz'],
+    },
+    public: {
+      http: ['https://rpc.mantle.xyz'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Mantlescan', url: 'https://mantlescan.xyz' },
+  },
+  testnet: false,
+} as const;
+
+// Determine which network to use
+const isTestnet = process.env.NEXT_PUBLIC_MANTLE_NETWORK !== 'mainnet';
+const activeChain = isTestnet ? mantleSepolia : mantleMainnet;
+
+// Configure wagmi
+const config = getDefaultConfig({
+  appName: 'PROVELT',
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'provelt-app',
+  chains: [activeChain],
+  ssr: true,
+});
+
+// Create a client
+const queryClient = new QueryClient();
 
 interface WalletProviderProps {
   children: ReactNode;
 }
 
 export function WalletProvider({ children }: WalletProviderProps) {
-  // Get network from environment
-  const network = useMemo(() => {
-    const envNetwork = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-    return envNetwork === 'mainnet-beta' 
-      ? WalletAdapterNetwork.Mainnet 
-      : WalletAdapterNetwork.Devnet;
-  }, []);
-
-  // Get RPC endpoint
-  const endpoint = useMemo(() => {
-    const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-    if (customRpc && customRpc !== 'https://api.devnet.solana.com') {
-      return customRpc;
-    }
-    return clusterApiUrl(network);
-  }, [network]);
-
-  // Initialize wallets - supports multiple popular Solana wallets
-  const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter({ network }),
-      new TorusWalletAdapter(),
-      new LedgerWalletAdapter(),
-      new CoinbaseWalletAdapter(),
-    ],
-    [network]
-  );
-
-  // Error handler for wallet connection issues
-  const onError = useCallback((error: Error) => {
-    console.error('Wallet error:', error);
-  }, []);
-
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider 
-        wallets={wallets} 
-        autoConnect
-        onError={onError}
-      >
-        <WalletModalProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          theme={darkTheme({
+            accentColor: '#8B5CF6', // brand-500
+            accentColorForeground: 'white',
+            borderRadius: 'medium',
+            fontStack: 'system',
+          })}
+          modalSize="compact"
+        >
           {children}
-        </WalletModalProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }

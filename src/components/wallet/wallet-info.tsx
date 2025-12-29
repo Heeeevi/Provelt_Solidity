@@ -1,146 +1,85 @@
 'use client';
 
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { useEffect, useState, useCallback } from 'react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { motion } from 'framer-motion';
-import { 
-  Wallet, 
-  RefreshCw, 
-  ExternalLink,
-  AlertCircle,
-  CheckCircle2,
-  Loader2
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAccount, useBalance } from 'wagmi';
+import { formatEther } from 'viem';
+import { Wallet, ExternalLink, Copy, Check } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn, truncateAddress, getExplorerUrl } from '@/lib/utils';
-import { SOLANA_NETWORK } from '@/lib/solana';
+import { getExplorerUrl, truncateAddress } from '@/lib/mantle';
 
 interface WalletInfoProps {
   className?: string;
-  showRefresh?: boolean;
-  showExplorer?: boolean;
+  showBalance?: boolean;
 }
 
-export function WalletInfo({ 
-  className, 
-  showRefresh = true,
-  showExplorer = true 
-}: WalletInfoProps) {
-  const { publicKey, connected } = useWallet();
-  const { connection } = useConnection();
-  const [balance, setBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function WalletInfo({ className, showBalance = true }: WalletInfoProps) {
+  const { address, isConnected } = useAccount();
+  const { data: balanceData } = useBalance({ address });
+  const [copied, setCopied] = useState(false);
 
-  const fetchBalance = useCallback(async () => {
-    if (!publicKey) {
-      setBalance(null);
-      return;
+  const handleCopy = useCallback(async () => {
+    if (address) {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
+  }, [address]);
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const bal = await connection.getBalance(publicKey);
-      setBalance(bal / LAMPORTS_PER_SOL);
-    } catch (err) {
-      console.error('Error fetching balance:', err);
-      setError('Failed to fetch balance');
-    } finally {
-      setLoading(false);
-    }
-  }, [connection, publicKey]);
-
-  useEffect(() => {
-    if (connected && publicKey) {
-      fetchBalance();
-    }
-  }, [connected, publicKey, fetchBalance]);
-
-  if (!connected || !publicKey) {
-    return (
-      <Card className={cn('bg-surface-800/50 border-surface-700', className)}>
-        <CardContent className="py-8 text-center">
-          <Wallet className="w-12 h-12 mx-auto text-surface-500 mb-4" />
-          <p className="text-surface-400">Connect your wallet to view info</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const explorerUrl = getExplorerUrl(publicKey.toBase58(), 'address', SOLANA_NETWORK);
+  if (!isConnected || !address) return null;
 
   return (
-    <Card className={cn('bg-surface-800/50 border-surface-700', className)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
-            Connected Wallet
-          </CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {SOLANA_NETWORK}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Address */}
-        <div>
-          <p className="text-xs text-surface-500 mb-1">Address</p>
-          <p className="font-mono text-sm text-white">
-            {truncateAddress(publicKey.toBase58(), 8)}
-          </p>
-        </div>
-
-        {/* Balance */}
-        <div>
-          <p className="text-xs text-surface-500 mb-1">Balance</p>
-          <div className="flex items-center gap-2">
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-surface-400" />
-            ) : error ? (
-              <span className="text-red-400 text-sm flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {error}
-              </span>
-            ) : (
-              <span className="text-xl font-semibold text-white">
-                {balance?.toFixed(4)} SOL
-              </span>
-            )}
-            {showRefresh && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={fetchBalance}
-                disabled={loading}
-                className="h-8 w-8"
-              >
-                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
-              </Button>
-            )}
+    <Card className={className}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center">
+            <Wallet className="w-5 h-5 text-brand-400" />
+          </div>
+          <div>
+            <p className="text-sm text-surface-400">Connected Wallet</p>
+            <p className="font-mono text-sm text-white">{truncateAddress(address)}</p>
           </div>
         </div>
 
-        {/* Explorer Link */}
-        {showExplorer && (
+        {showBalance && balanceData && (
+          <div className="mb-3 p-3 rounded-lg bg-surface-800/50">
+            <p className="text-xs text-surface-400 mb-1">Balance</p>
+            <p className="text-lg font-semibold text-white">
+              {parseFloat(formatEther(balanceData.value)).toFixed(4)} {balanceData.symbol}
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            className="flex-1"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 mr-1 text-green-500" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-1" />
+                Copy
+              </>
+            )}
+          </Button>
+
           <a
-            href={explorerUrl}
+            href={getExplorerUrl(address, 'address')}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(
-              'flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300',
-              'transition-colors'
-            )}
+            className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-surface-700 bg-transparent hover:bg-surface-800 transition-colors"
           >
-            <ExternalLink className="w-4 h-4" />
-            View on Solana Explorer
+            <ExternalLink className="w-4 h-4 mr-1" />
+            Explorer
           </a>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

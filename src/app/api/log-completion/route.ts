@@ -1,26 +1,25 @@
 /**
  * Log Completion API
- * Records challenge completion on-chain transactions for verification
+ * Records challenge completion for verification
  * 
  * POST /api/log-completion
- * Body: { challengeId, userId, signature, memoData }
+ * Body: { challengeId, userId, proofHash, walletAddress, timestamp }
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { Connection } from '@solana/web3.js';
-import { SOLANA_RPC_URL } from '@/lib/solana/config';
 
 interface LogCompletionBody {
   challengeId: string;
   userId: string;
-  signature: string;
-  memoData?: string;
+  proofHash: string;
+  walletAddress?: string;
+  timestamp: number;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -29,32 +28,13 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: LogCompletionBody = await request.json();
-    const { challengeId, userId, signature, memoData } = body;
+    const { challengeId, userId, proofHash, walletAddress, timestamp } = body;
 
-    if (!challengeId || !signature) {
+    if (!challengeId || !proofHash) {
       return NextResponse.json(
-        { error: 'Missing required fields: challengeId, signature' },
+        { error: 'Missing required fields: challengeId, proofHash' },
         { status: 400 }
       );
-    }
-
-    // Verify the transaction exists on-chain
-    const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
-    
-    try {
-      const tx = await connection.getTransaction(signature, {
-        maxSupportedTransactionVersion: 0,
-      });
-      
-      if (!tx) {
-        return NextResponse.json(
-          { error: 'Transaction not found on-chain' },
-          { status: 400 }
-        );
-      }
-    } catch (error) {
-      console.error('Error verifying transaction:', error);
-      // Continue even if verification fails - transaction might be too recent
     }
 
     // Store completion log in database
@@ -64,12 +44,12 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         type: 'completion_logged',
         title: 'Challenge Completion Logged',
-        message: `Your challenge completion has been logged on-chain. Transaction: ${signature.slice(0, 8)}...`,
+        message: `Your challenge completion has been logged. Proof: ${proofHash.slice(0, 10)}...`,
         data: {
           challengeId,
-          signature,
-          memoData,
-          timestamp: new Date().toISOString(),
+          proofHash,
+          walletAddress,
+          timestamp: new Date(timestamp).toISOString(),
         },
       })
       .select()
@@ -81,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      signature,
+      proofHash,
       message: 'Completion logged successfully',
     });
 
@@ -100,7 +80,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

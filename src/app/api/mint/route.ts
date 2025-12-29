@@ -1,19 +1,20 @@
 /**
  * Mint Badge API
- * Mints a compressed NFT badge for challenge completion
+ * Mints an ERC-721 NFT badge on Mantle for challenge completion
  * 
  * POST /api/mint
  * Body: { challengeId, submissionId, walletAddress }
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { 
-  mintCompressedNFT, 
-  createBadgeMetadata,
-  uploadMetadata,
-  getMintingConfig,
-} from '@/lib/solana/mint';
-import { SOLANA_NETWORK, getExplorerUrl } from '@/lib/solana/config';
+import { ethers } from 'ethers';
+import {
+  getExplorerUrl,
+  BADGE_CONTRACT_ADDRESS,
+  MANTLE_RPC_URL,
+  PROVELT_BADGE_ABI,
+  createProofHash,
+} from '@/lib/mantle';
 
 interface MintRequestBody {
   challengeId: string;
@@ -21,10 +22,19 @@ interface MintRequestBody {
   walletAddress: string;
 }
 
+// Check if contract is configured
+function isMintingConfigured(): boolean {
+  return !!(
+    BADGE_CONTRACT_ADDRESS &&
+    BADGE_CONTRACT_ADDRESS.startsWith('0x') &&
+    process.env.TREASURY_PRIVATE_KEY
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -42,11 +52,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check minting configuration
-    const config = getMintingConfig();
-    if (!config.configured) {
+    // Validate wallet address format
+    if (!ethers.isAddress(walletAddress)) {
       return NextResponse.json(
-        { error: 'Minting not configured. Please set up Merkle tree and collection addresses.' },
+        { error: 'Invalid wallet address format' },
+        { status: 400 }
+      );
+    }
+
+    // Check minting configuration
+    if (!isMintingConfigured()) {
+      return NextResponse.json(
+        { error: 'Minting not configured. Please deploy the badge contract and set environment variables.' },
         { status: 503 }
       );
     }
@@ -91,43 +108,71 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get treasury private key from environment
-    const treasuryPrivateKey = process.env.TREASURY_PRIVATE_KEY;
-    if (!treasuryPrivateKey || treasuryPrivateKey.startsWith('your_')) {
-      return NextResponse.json(
-        { error: 'Treasury wallet not configured' },
-        { status: 503 }
-      );
-    }
+    // Get treasury private key
+    const treasuryPrivateKey = process.env.TREASURY_PRIVATE_KEY!;
+
+    // Create provider and wallet
+    const provider = new ethers.JsonRpcProvider(MANTLE_RPC_URL);
+    const wallet = new ethers.Wallet(treasuryPrivateKey, provider);
+
+    // Create contract instance
+    const contract = new ethers.Contract(BADGE_CONTRACT_ADDRESS, PROVELT_BADGE_ABI, wallet);
 
     // Create badge metadata
     const challenge = submission.challenge as any;
-    const metadata = createBadgeMetadata({
-      challengeTitle: challenge.title,
-      challengeCategory: challenge.category || 'General',
-      difficulty: challenge.difficulty || 'Medium',
-      completedAt: new Date().toISOString(),
-      imageUrl: challenge.image_url || 'https://provelt.app/badge-default.png',
-      creatorAddress: walletAddress,
-    });
+    const metadata = {
+      name: `PROVELT: ${challenge.title}`,
+      description: `Badge earned for completing the "${challenge.title}" challenge on PROVELT.`,
+      image: challenge.image_url || 'https://provelt.app/badge-default.png',
+      attributes: [
+        { trait_type: 'Challenge', value: challenge.title },
+        { trait_type: 'Category', value: challenge.category || 'General' },
+        { trait_type: 'Difficulty', value: challenge.difficulty || 'Medium' },
+        { trait_type: 'Completed', value: new Date().toISOString() },
+        { trait_type: 'Platform', value: 'PROVELT' },
+        { trait_type: 'Network', value: 'Mantle' },
+      ],
+    };
 
-    // Upload metadata (placeholder - would use Arweave/IPFS in production)
-    const metadataUri = await uploadMetadata(metadata);
+    // Create metadata URI (base64 encoded JSON for now)
+    const metadataJson = JSON.stringify(metadata);
+    const metadataUri = `data:application/json;base64,${Buffer.from(metadataJson).toString('base64')}`;
 
-    // Mint compressed NFT
-    const mintResult = await mintCompressedNFT({
-      recipientAddress: walletAddress,
-      merkleTreeAddress: config.merkleTree!,
-      collectionAddress: config.collection!,
-      metadata: { ...metadata, image: metadataUri },
-      treasuryPrivateKey,
-    });
+    // Create proof hash
+    const proofHash = createProofHash(
+      challengeId,
+      user.id,
+      submissionId,
+      Date.now()
+    );
 
-    if (!mintResult.success) {
-      return NextResponse.json(
-        { error: mintResult.error || 'Minting failed' },
-        { status: 500 }
-      );
+    // Convert challengeId to uint256 (hash it if string)
+    const challengeIdNum = ethers.toBigInt(ethers.keccak256(ethers.toUtf8Bytes(challengeId)));
+
+    // Mint the badge
+    const tx = await contract.mintBadge(
+      walletAddress,
+      challengeIdNum,
+      proofHash,
+      metadataUri
+    );
+
+    // Wait for confirmation
+    const receipt = await tx.wait();
+    const transactionHash = receipt.hash;
+
+    // Get tokenId from event logs
+    let tokenId = '0';
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed?.name === 'BadgeMinted') {
+          tokenId = parsed.args.tokenId.toString();
+          break;
+        }
+      } catch {
+        // Not a matching event
+      }
     }
 
     // Store badge in database
@@ -137,9 +182,9 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         challenge_id: challengeId,
         submission_id: submissionId,
-        mint_address: mintResult.assetId || mintResult.signature!,
+        mint_address: BADGE_CONTRACT_ADDRESS,
         metadata_uri: metadataUri,
-        tx_signature: mintResult.signature!,
+        tx_signature: transactionHash,
         name: metadata.name,
         description: metadata.description,
         image_url: metadata.image,
@@ -150,24 +195,23 @@ export async function POST(request: NextRequest) {
 
     if (badgeError) {
       console.error('Error storing badge:', badgeError);
-      // Badge was minted but DB insert failed - log for manual reconciliation
     }
 
     // Update submission with badge mint info
     await supabase
       .from('submissions')
       .update({
-        nft_mint_address: mintResult.assetId || mintResult.signature,
+        nft_mint_address: BADGE_CONTRACT_ADDRESS,
         nft_metadata_uri: metadataUri,
-        nft_tx_signature: mintResult.signature,
+        nft_tx_signature: transactionHash,
         minted_at: new Date().toISOString(),
       })
       .eq('id', submissionId);
 
-    // Update user badge count (increment badges_count in profile)
+    // Update user badge count
     await supabase
       .from('profiles')
-      .update({ 
+      .update({
         badges_count: (await supabase
           .from('badge_nfts')
           .select('id', { count: 'exact', head: true })
@@ -178,10 +222,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      signature: mintResult.signature,
-      assetId: mintResult.assetId,
-      explorerUrl: getExplorerUrl(mintResult.signature!, 'tx'),
-      badge: badge,
+      transactionHash,
+      tokenId,
+      explorerUrl: getExplorerUrl(transactionHash, 'tx'),
+      badge,
     });
 
   } catch (error) {
@@ -197,11 +241,10 @@ export async function POST(request: NextRequest) {
  * GET /api/mint - Get minting configuration status
  */
 export async function GET() {
-  const config = getMintingConfig();
+  const configured = isMintingConfigured();
   return NextResponse.json({
-    configured: config.configured,
-    network: config.network,
-    merkleTree: config.merkleTree ? `${config.merkleTree.slice(0, 8)}...` : null,
-    collection: config.collection ? `${config.collection.slice(0, 8)}...` : null,
+    configured,
+    network: process.env.NEXT_PUBLIC_MANTLE_NETWORK || 'sepolia',
+    contract: BADGE_CONTRACT_ADDRESS ? `${BADGE_CONTRACT_ADDRESS.slice(0, 10)}...` : null,
   });
 }

@@ -1,0 +1,19 @@
+{
+    "name": "provelt-contracts",
+    "version": "1.0.0",
+    "description": "PROVELT Smart Contracts for Mantle Network",
+    "scripts": {
+        "compile": "hardhat compile",
+        "test": "hardhat test",
+        "deploy:sepolia": "hardhat run scripts/deploy.js --network mantleSepolia",
+        "deploy:mainnet": "hardhat run scripts/deploy.js --network mantleMainnet",
+        "verify:sepolia": "hardhat verify --network mantleSepolia",
+        "clean": "hardhat clean"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+        "@openzeppelin/contracts": "^5.0.0",
+        "dotenv": "^16.3.1",
+        "hardhat": "^2.19.0"
+    }
+}

@@ -1,15 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { 
-  Transaction,
-  SystemProgram,
-  PublicKey,
-  LAMPORTS_PER_SOL,
-} from '@solana/web3.js';
+import { useCallback } from 'react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { parseAbiItem, encodeFunctionData, keccak256, encodePacked } from 'viem';
+import { getExplorerUrl, BADGE_CONTRACT_ADDRESS } from '@/lib/mantle';
 
 interface MintBadgeParams {
   challengeId: string;
@@ -18,48 +14,37 @@ interface MintBadgeParams {
 
 interface MintBadgeResult {
   success: boolean;
-  signature?: string;
-  assetId?: string;
+  transactionHash?: string;
+  tokenId?: string;
   explorerUrl?: string;
   error?: string;
 }
 
-interface LogCompletionParams {
-  challengeId: string;
-  userId: string;
-  timestamp: number;
-}
-
 /**
- * Hook for minting badge NFTs
+ * Hook for minting badge NFTs on Mantle
  * Handles the client-side wallet interaction and API calls
  */
 export function useMintBadge() {
-  const { publicKey, signTransaction, connected } = useWallet();
-  const { connection } = useConnection();
-  const { setVisible } = useWalletModal();
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ challengeId, submissionId }: MintBadgeParams): Promise<MintBadgeResult> => {
       // Ensure wallet is connected
-      if (!publicKey || !connected) {
-        setVisible(true);
+      if (!address || !isConnected) {
+        openConnectModal?.();
         throw new Error('Please connect your wallet first');
       }
 
-      if (!signTransaction) {
-        throw new Error('Wallet does not support transaction signing');
-      }
-
-      // Call mint API
+      // Call mint API (server-side minting for gas sponsorship)
       const response = await fetch('/api/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challengeId,
           submissionId,
-          walletAddress: publicKey.toBase58(),
+          walletAddress: address,
         }),
       });
 
@@ -71,8 +56,8 @@ export function useMintBadge() {
 
       return {
         success: true,
-        signature: data.signature,
-        assetId: data.assetId,
+        transactionHash: data.transactionHash,
+        tokenId: data.tokenId,
         explorerUrl: data.explorerUrl,
       };
     },
@@ -85,61 +70,34 @@ export function useMintBadge() {
   });
 }
 
+interface LogCompletionParams {
+  challengeId: string;
+  userId: string;
+  timestamp: number;
+}
+
 /**
- * Hook for logging challenge completion on-chain
- * Creates a memo transaction with completion data
+ * Hook for logging challenge completion
+ * For EVM, this is done via API (no on-chain memo needed)
  */
 export function useLogChallengeCompletion() {
-  const { publicKey, signTransaction, sendTransaction, connected } = useWallet();
-  const { connection } = useConnection();
-  const { setVisible } = useWalletModal();
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
 
   return useMutation({
-    mutationFn: async ({ challengeId, userId, timestamp }: LogCompletionParams): Promise<{ signature: string }> => {
-      if (!publicKey || !connected) {
-        setVisible(true);
+    mutationFn: async ({ challengeId, userId, timestamp }: LogCompletionParams): Promise<{ proofHash: string }> => {
+      if (!address || !isConnected) {
+        openConnectModal?.();
         throw new Error('Please connect your wallet first');
       }
 
-      if (!sendTransaction) {
-        throw new Error('Wallet does not support sending transactions');
-      }
-
-      // Create memo data
-      const memoData = JSON.stringify({
-        type: 'PROVELT_COMPLETION',
-        challenge: challengeId,
-        user: userId,
-        ts: timestamp,
-      });
-
-      // Create a memo transaction
-      // Using a minimal SOL transfer to self as a carrier for the memo
-      const transaction = new Transaction();
-      
-      // Add memo instruction (simplified - just a transfer to self with memo in logs)
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: publicKey,
-          lamports: 0, // Zero lamport transfer
-        })
+      // Create proof hash (matches contract's expected format)
+      const proofHash = keccak256(
+        encodePacked(
+          ['string', 'string', 'uint256'],
+          [challengeId, userId, BigInt(timestamp)]
+        )
       );
-
-      // Get recent blockhash
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = publicKey;
-
-      // Send transaction
-      const signature = await sendTransaction(transaction, connection);
-
-      // Wait for confirmation
-      await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight,
-      });
 
       // Log to API for record keeping
       await fetch('/api/log-completion', {
@@ -148,59 +106,19 @@ export function useLogChallengeCompletion() {
         body: JSON.stringify({
           challengeId,
           userId,
-          signature,
-          memoData,
+          proofHash,
+          walletAddress: address,
+          timestamp,
         }),
       }).catch(console.error); // Non-blocking
 
-      return { signature };
+      return { proofHash };
     },
   });
 }
 
 /**
  * Hook for wallet connection state and utilities
+ * Re-exports from useMantleWallet for backwards compatibility
  */
-export function useWalletConnection() {
-  const { publicKey, connected, connecting, disconnect } = useWallet();
-  const { connection } = useConnection();
-  const { setVisible } = useWalletModal();
-  const [balance, setBalance] = useState<number | null>(null);
-
-  const connect = useCallback(() => {
-    setVisible(true);
-  }, [setVisible]);
-
-  const fetchBalance = useCallback(async () => {
-    if (!publicKey) return null;
-    try {
-      const bal = await connection.getBalance(publicKey);
-      const solBalance = bal / LAMPORTS_PER_SOL;
-      setBalance(solBalance);
-      return solBalance;
-    } catch (error) {
-      console.error('Error fetching balance:', error);
-      return null;
-    }
-  }, [connection, publicKey]);
-
-  // Fetch balance when connected
-  useEffect(() => {
-    if (connected && publicKey) {
-      fetchBalance();
-    } else {
-      setBalance(null);
-    }
-  }, [connected, publicKey, fetchBalance]);
-
-  return {
-    publicKey,
-    address: publicKey?.toBase58() || null,
-    connected,
-    connecting,
-    balance,
-    connect,
-    disconnect,
-    fetchBalance,
-  };
-}
+export { useMantleWallet as useWalletConnection } from './use-solana-wallet';

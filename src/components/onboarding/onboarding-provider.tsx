@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { 
-  X, 
-  ChevronRight, 
+import { useAccount } from 'wagmi';
+import {
+  X,
+  ChevronRight,
   ChevronLeft,
   Wallet,
   Trophy,
@@ -108,12 +108,12 @@ export function useOnboarding() {
       isOnboarding: false,
       currentStep: 0,
       steps: [],
-      startOnboarding: () => {},
-      nextStep: () => {},
-      prevStep: () => {},
-      goToStep: () => {},
-      skipOnboarding: () => {},
-      completeOnboarding: () => {},
+      startOnboarding: () => { },
+      nextStep: () => { },
+      prevStep: () => { },
+      goToStep: () => { },
+      skipOnboarding: () => { },
+      completeOnboarding: () => { },
       hasCompletedOnboarding: true,
     };
   }
@@ -130,8 +130,8 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
   const [currentStep, setCurrentStep] = useState(0);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true);
   const [mounted, setMounted] = useState(false);
-  
-  const { connected } = useWallet();
+
+  const { isConnected: connected } = useAccount();
 
   // Check localStorage on mount
   useEffect(() => {
@@ -212,16 +212,16 @@ export function OnboardingProvider({ children, steps = DEFAULT_STEPS }: Onboardi
 
 // Centered modal overlay component
 function OnboardingOverlay() {
-  const { 
-    isOnboarding, 
-    currentStep, 
-    steps, 
-    nextStep, 
+  const {
+    isOnboarding,
+    currentStep,
+    steps,
+    nextStep,
     prevStep,
     goToStep,
-    skipOnboarding 
+    skipOnboarding
   } = useOnboarding();
-  
+
   const step = steps[currentStep];
 
   if (!isOnboarding) return null;
@@ -275,8 +275,8 @@ function OnboardingOverlay() {
                   onClick={() => goToStep(index)}
                   className={cn(
                     'w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-200',
-                    index === currentStep 
-                      ? 'bg-brand-500 scale-125' 
+                    index === currentStep
+                      ? 'bg-brand-500 scale-125'
                       : 'bg-surface-600 hover:bg-surface-500'
                   )}
                 />
@@ -293,7 +293,7 @@ function OnboardingOverlay() {
               >
                 {isLastStep ? 'Close' : 'Skip Tour'}
               </Button>
-              
+
               <div className="flex gap-2 w-full sm:w-auto">
                 {!isFirstStep && (
                   <Button

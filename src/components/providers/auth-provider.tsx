@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { resetFeedSeed } from '@/hooks/use-feed';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   userId: null,
-  signOut: async () => {},
+  signOut: async () => { },
 });
 
 export function useAuth() {
@@ -48,17 +48,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const supabase = createClient();
-  const { publicKey, connected, disconnect } = useWallet();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
 
   // Wallet state
-  const walletAddress = publicKey?.toString() || null;
-  const isWalletConnected = connected && !!publicKey;
-  
+  const walletAddress = address || null;
+  const isWalletConnected = isConnected && !!address;
+
   // User is authenticated if they have either Supabase session OR connected wallet
   const isAuthenticated = !!user || isWalletConnected;
-  
+
   // User ID: prefer Supabase user ID, fallback to wallet address
   const userId = user?.id || walletAddress;
 
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
-        
+
         // Reset feed seed on sign in/out to get new random order
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
           resetFeedSeed();
@@ -109,28 +110,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     // Reset feed seed for new random order on next login
     resetFeedSeed();
-    
+
     // Sign out from Supabase
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
-    
+
     // Disconnect wallet
-    if (connected) {
-      await disconnect();
+    if (isConnected) {
+      disconnect();
     }
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
+    <AuthContext.Provider value={{
+      user,
+      session,
       walletAddress,
       isWalletConnected,
       isAuthenticated,
-      isLoading, 
+      isLoading,
       userId,
-      signOut 
+      signOut
     }}>
       {children}
     </AuthContext.Provider>

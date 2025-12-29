@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Trophy, 
-  Loader2, 
-  CheckCircle, 
-  AlertCircle, 
+import { motion } from 'framer-motion';
+import {
+  Trophy,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
   ExternalLink,
   Sparkles
 } from 'lucide-react';
@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useMintBadge } from '@/hooks/use-mint-badge';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { useAccount } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 interface MintBadgeButtonProps {
   challengeId: string;
@@ -23,7 +23,7 @@ interface MintBadgeButtonProps {
   challengeTitle: string;
   disabled?: boolean;
   className?: string;
-  onSuccess?: (result: { signature: string; assetId?: string }) => void;
+  onSuccess?: (result: { transactionHash: string; tokenId?: string }) => void;
   onError?: (error: string) => void;
 }
 
@@ -36,26 +36,26 @@ export function MintBadgeButton({
   onSuccess,
   onError,
 }: MintBadgeButtonProps) {
-  const { connected, publicKey } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const mintBadge = useMintBadge();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [mintResult, setMintResult] = useState<{ signature: string; explorerUrl?: string } | null>(null);
+  const [mintResult, setMintResult] = useState<{ transactionHash: string; explorerUrl?: string } | null>(null);
 
   const handleMint = async () => {
-    if (!connected || !publicKey) {
-      setVisible(true);
+    if (!isConnected || !address) {
+      openConnectModal?.();
       return;
     }
 
     try {
       const result = await mintBadge.mutateAsync({ challengeId, submissionId });
       setMintResult({
-        signature: result.signature!,
+        transactionHash: result.transactionHash!,
         explorerUrl: result.explorerUrl,
       });
       setShowSuccess(true);
-      onSuccess?.({ signature: result.signature!, assetId: result.assetId });
+      onSuccess?.({ transactionHash: result.transactionHash!, tokenId: result.tokenId });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Minting failed';
       onError?.(message);
@@ -81,7 +81,7 @@ export function MintBadgeButton({
             </motion.div>
             <h3 className="text-lg font-semibold text-white mb-2">Badge Minted!</h3>
             <p className="text-surface-400 text-sm mb-4">
-              Your badge for &quot;{challengeTitle}&quot; has been minted.
+              Your badge for &quot;{challengeTitle}&quot; has been minted on Mantle.
             </p>
             {mintResult.explorerUrl && (
               <a
@@ -91,7 +91,7 @@ export function MintBadgeButton({
                 className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm"
               >
                 <ExternalLink className="w-4 h-4" />
-                View on Explorer
+                View on Mantlescan
               </a>
             )}
           </CardContent>
@@ -145,7 +145,7 @@ export function MintBadgeButton({
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           Minting...
         </>
-      ) : !connected ? (
+      ) : !isConnected ? (
         <>
           <Sparkles className="w-4 h-4 mr-2" />
           Connect to Mint
