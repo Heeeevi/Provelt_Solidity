@@ -25,7 +25,6 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useOnboarding } from '@/components/onboarding';
 import { useMantleWallet } from '@/hooks/use-mantle-wallet';
 import { cn } from '@/lib/utils';
-import { ICM_LINKS } from '@/lib/icm';
 
 interface SettingItemProps {
   icon: React.ReactNode;
@@ -141,25 +140,19 @@ export default function SettingsPage() {
           />
         </SettingSection>
 
-        {/* ICM Integration */}
-        <SettingSection title="ICM Ecosystem">
+        {/* Mantle Network */}
+        <SettingSection title="Mantle Network">
           <SettingItem
             icon={<Rocket className="w-5 h-5 text-brand-500" />}
-            label="ICM Integration"
-            description="Internet Capital Markets"
-            onClick={() => router.push('/icm')}
+            label="Powered by Mantle"
+            description="Gas-free NFT minting"
+            onClick={() => window.open('https://mantle.xyz', '_blank')}
           />
           <SettingItem
             icon={<ExternalLink className="w-5 h-5 text-purple-400" />}
-            label="Believe.app"
-            description="Launch your project"
-            onClick={() => window.open('https://believe.app', '_blank')}
-          />
-          <SettingItem
-            icon={<ExternalLink className="w-5 h-5 text-green-400" />}
-            label="Apply to Incubator"
-            description="Get ICM support"
-            onClick={() => window.open(ICM_LINKS.apply, '_blank')}
+            label="View on Explorer"
+            description="Mantlescan"
+            onClick={() => window.open('https://sepolia.mantlescan.xyz', '_blank')}
           />
         </SettingSection>
 

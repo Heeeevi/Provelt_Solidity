@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { EmptyState, ErrorState } from '@/components/ui/empty-state';
 import { SubmissionViewer } from '@/components/feed/submission-viewer';
-import { ICMTokenCard } from '@/components/icm';
+
 import { useFeed } from '@/hooks/use-feed';
 import { useChallenges } from '@/hooks/use-challenges';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import type { FeedItem } from '@/lib/database.types';
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  
+
   const {
     items,
     isLoading,
@@ -42,22 +42,22 @@ export default function ExplorePage() {
   const lastItemRef = useCallback((node: HTMLDivElement | null) => {
     if (isFetchingNextPage) return;
     if (observerRef.current) observerRef.current.disconnect();
-    
+
     observerRef.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasNextPage) {
         fetchNextPage();
       }
     });
-    
+
     if (node) observerRef.current.observe(node);
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   // Filter items based on search
   const filteredItems = searchQuery
-    ? items.filter(item => 
-        item.submission.caption?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.challenge?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? items.filter(item =>
+      item.submission.caption?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.challenge?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : items;
 
   // Handle item click - open viewer
@@ -85,72 +85,65 @@ export default function ExplorePage() {
 
         {/* Trending Challenges */}
         {!searchQuery && challenges && challenges.length > 0 && (
-        <div className="px-4 pb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-brand-500" />
-            <h2 className="text-sm font-semibold text-white">Trending Challenges</h2>
-          </div>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-            {challenges.slice(0, 5).map((challenge) => (
-              <Link
-                key={challenge.id}
-                href={`/challenges/${challenge.id}`}
-                className="flex-shrink-0"
-              >
-                <Badge 
-                  variant="outline"
-                  className="px-3 py-1.5 bg-surface-800/50 border-surface-700 hover:border-brand-500 transition-colors"
-                >
-                  {challenge.title}
-                </Badge>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-        {/* ICM Widget */}
-        {!searchQuery && (
           <div className="px-4 pb-4">
-            <Link href="/icm">
-              <ICMTokenCard compact className="hover:border-brand-500/50 transition-colors" />
-            </Link>
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-brand-500" />
+              <h2 className="text-sm font-semibold text-white">Trending Challenges</h2>
+            </div>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {challenges.slice(0, 5).map((challenge) => (
+                <Link
+                  key={challenge.id}
+                  href={`/challenges/${challenge.id}`}
+                  className="flex-shrink-0"
+                >
+                  <Badge
+                    variant="outline"
+                    className="px-3 py-1.5 bg-surface-800/50 border-surface-700 hover:border-brand-500 transition-colors"
+                  >
+                    {challenge.title}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Spinner size="lg" />
-        </div>
-      ) : error ? (
-        <div className="px-4">
-          <ErrorState message={error.message} onRetry={() => refetch()} />
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div className="px-4">
-          <EmptyState
-            title={searchQuery ? "No results found" : "Nothing to explore yet"}
-            description={searchQuery ? "Try a different search term" : "Be the first to complete a challenge!"}
-          />
-        </div>
-      ) : (
-        <>
-          {/* Masonry Gallery */}
-          <MasonryGallery 
-            items={filteredItems} 
-            lastItemRef={lastItemRef}
-            onItemClick={handleItemClick}
-          />
 
-          {/* Loading more */}
-          {isFetchingNextPage && (
-            <div className="py-8 flex justify-center">
-              <Spinner size="md" />
-            </div>
-          )}
-        </>
-      )}
+
+        {/* Content */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Spinner size="lg" />
+          </div>
+        ) : error ? (
+          <div className="px-4">
+            <ErrorState message={error.message} onRetry={() => refetch()} />
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="px-4">
+            <EmptyState
+              title={searchQuery ? "No results found" : "Nothing to explore yet"}
+              description={searchQuery ? "Try a different search term" : "Be the first to complete a challenge!"}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Masonry Gallery */}
+            <MasonryGallery
+              items={filteredItems}
+              lastItemRef={lastItemRef}
+              onItemClick={handleItemClick}
+            />
+
+            {/* Loading more */}
+            {isFetchingNextPage && (
+              <div className="py-8 flex justify-center">
+                <Spinner size="md" />
+              </div>
+            )}
+          </>
+        )}
       </PageContainer>
 
       {/* Fullscreen Viewer */}
@@ -168,11 +161,11 @@ export default function ExplorePage() {
 }
 
 // Masonry Gallery Component
-function MasonryGallery({ 
-  items, 
+function MasonryGallery({
+  items,
   lastItemRef,
   onItemClick,
-}: { 
+}: {
   items: FeedItem[];
   lastItemRef: (node: HTMLDivElement | null) => void;
   onItemClick: (index: number) => void;
@@ -180,7 +173,7 @@ function MasonryGallery({
   // Create columns for masonry layout with original indices
   const columns = 2;
   const columnItems: { item: FeedItem; originalIndex: number }[][] = Array.from({ length: columns }, () => []);
-  
+
   items.forEach((item, index) => {
     columnItems[index % columns].push({ item, originalIndex: index });
   });
@@ -194,7 +187,7 @@ function MasonryGallery({
               const isLast = colIndex === columns - 1 && itemIndex === column.length - 1;
               // Vary heights for visual interest
               const heightClass = getRandomHeight(item.submission.id);
-              
+
               return (
                 <div
                   key={item.submission.id}
@@ -213,10 +206,10 @@ function MasonryGallery({
 }
 
 // Individual Gallery Item
-function GalleryItem({ 
-  item, 
-  heightClass 
-}: { 
+function GalleryItem({
+  item,
+  heightClass
+}: {
   item: FeedItem;
   heightClass: string;
 }) {
@@ -287,16 +280,16 @@ function GalleryItem({
             <Award className="w-3 h-3 text-white" />
           </div>
         </div>
-        )}
+      )}
 
-        {/* XP Badge */}
-        {challenge && (
-          <div className="absolute top-2 left-2">
-            <Badge className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 border-0">
-              +{challenge.points} XP
-            </Badge>
-          </div>
-        )}
+      {/* XP Badge */}
+      {challenge && (
+        <div className="absolute top-2 left-2">
+          <Badge className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 border-0">
+            +{challenge.points} XP
+          </Badge>
+        </div>
+      )}
     </motion.div>
   );
 }
