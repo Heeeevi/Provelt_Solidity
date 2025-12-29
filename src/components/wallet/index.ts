@@ -1,6 +1,6 @@
 /**
  * Wallet Components
- * Solana wallet integration components for PROVELT
+ * EVM wallet integration components for PROVELT on Mantle Network
  */
 export { WalletButton } from './wallet-button';
 export { WalletInfo } from './wallet-info';

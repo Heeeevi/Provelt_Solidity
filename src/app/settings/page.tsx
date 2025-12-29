@@ -23,7 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useOnboarding } from '@/components/onboarding';
-import { useMantleWallet } from '@/hooks/use-solana-wallet';
+import { useMantleWallet } from '@/hooks/use-mantle-wallet';
 import { cn } from '@/lib/utils';
 import { ICM_LINKS } from '@/lib/icm';
 

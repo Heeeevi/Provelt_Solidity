@@ -22,15 +22,15 @@ export function useProfile(userId: string) {
     queryFn: async (): Promise<Profile | null> => {
       // Check if userId looks like a wallet address (longer than UUID)
       const isWalletAddress = userId.length > 36;
-      
+
       let query = supabase.from('profiles').select('*');
-      
+
       if (isWalletAddress) {
         query = query.eq('wallet_address', userId);
       } else {
         query = query.eq('id', userId);
       }
-      
+
       const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
@@ -53,20 +53,20 @@ export function useUserBadges(userId: string) {
     queryKey: profileKeys.badges(userId),
     queryFn: async (): Promise<BadgeNFT[]> => {
       console.log('Fetching badges for userId:', userId);
-      
+
       // Handle wallet address case
       let profileId = userId;
       const isWalletAddress = userId.length > 36;
-      
+
       if (isWalletAddress) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
           .eq('wallet_address', userId)
           .maybeSingle();
-        
+
         console.log('Found profile for wallet:', profile);
-        
+
         if (!profile) return [];
         profileId = profile.id;
       }
@@ -118,14 +118,14 @@ export function useUserSubmissions(userId: string) {
     queryKey: profileKeys.submissions(userId),
     queryFn: async (): Promise<any[]> => {
       console.log('Fetching submissions for userId:', userId);
-      
+
       // First, we need to figure out if userId is a wallet address or a profile ID
       // If it's a wallet address, we need to get the profile first
       let profileId = userId;
-      
-      // Check if userId looks like a wallet address (Solana addresses are base58 encoded, typically 32-44 chars)
+
+      // Check if userId looks like a wallet address (EVM addresses are 42 chars starting with 0x)
       const isWalletAddress = userId.length > 36;
-      
+
       if (isWalletAddress) {
         // Get profile by wallet address
         const { data: profile } = await supabase
@@ -133,9 +133,9 @@ export function useUserSubmissions(userId: string) {
           .select('id')
           .eq('wallet_address', userId)
           .maybeSingle();
-        
+
         console.log('Found profile for wallet:', profile);
-        
+
         if (!profile) return [];
         profileId = profile.id;
       }

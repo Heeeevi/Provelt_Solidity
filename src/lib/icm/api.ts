@@ -34,20 +34,20 @@ interface DexScreenerResponse {
 // Fetch ICM token price from DexScreener
 async function fetchICMPrice(): Promise<TokenPriceData> {
   const response = await fetch(ICM_API.dexScreener);
-  
+
   if (!response.ok) {
     throw new Error('Failed to fetch ICM price');
   }
-  
+
   const data: DexScreenerResponse = await response.json();
-  
+
   if (!data.pairs || data.pairs.length === 0) {
     throw new Error('No trading pairs found');
   }
-  
+
   // Get the first/most liquid pair
   const pair = data.pairs[0];
-  
+
   return {
     price: parseFloat(pair.priceUsd) || 0,
     priceChange24h: pair.priceChange?.h24 || 0,
@@ -102,12 +102,12 @@ export function formatPercentage(pct: number): string {
   return `${sign}${pct.toFixed(2)}%`;
 }
 
-// Get Solscan link for token
-export function getSolscanLink(address: string = ICM_TOKEN_ADDRESS): string {
-  return `https://solscan.io/token/${address}`;
+// Get Mantlescan link for token/address
+export function getMantlescanLink(address: string = ICM_TOKEN_ADDRESS): string {
+  return `https://sepolia.mantlescan.xyz/address/${address}`;
 }
 
-// Get Birdeye link for token
-export function getBirdeyeLink(address: string = ICM_TOKEN_ADDRESS): string {
-  return `https://birdeye.so/token/${address}?chain=solana`;
+// Get DexScreener link for token
+export function getDexScreenerLink(address: string = ICM_TOKEN_ADDRESS): string {
+  return `https://dexscreener.com/mantle/${address}`;
 }

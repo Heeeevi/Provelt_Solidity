@@ -121,4 +121,4 @@ export function useLogChallengeCompletion() {
  * Hook for wallet connection state and utilities
  * Re-exports from useMantleWallet for backwards compatibility
  */
-export { useMantleWallet as useWalletConnection } from './use-solana-wallet';
+export { useMantleWallet as useWalletConnection } from './use-mantle-wallet';

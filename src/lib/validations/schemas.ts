@@ -373,19 +373,23 @@ export type SubmissionForm = z.infer<typeof SubmissionFormSchema>;
 // UTILITY VALIDATORS
 // ============================================
 
-// Validate Solana address
-export const SolanaAddressSchema = z
+// Validate EVM wallet address
+export const EvmAddressSchema = z
   .string()
-  .min(32)
-  .max(44)
-  .regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid Solana address');
+  .length(42, 'EVM address must be 42 characters')
+  .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address');
 
-// Validate transaction signature
-export const TxSignatureSchema = z
+// Alias for backwards compatibility
+export const SolanaAddressSchema = EvmAddressSchema;
+
+// Validate transaction hash
+export const TxHashSchema = z
   .string()
-  .min(87)
-  .max(88)
-  .regex(/^[1-9A-HJ-NP-Za-km-z]+$/, 'Invalid transaction signature');
+  .length(66, 'Transaction hash must be 66 characters')
+  .regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid transaction hash');
+
+// Legacy alias
+export const TxSignatureSchema = TxHashSchema;
 
 // Validate UUID
 export const UUIDSchema = z.string().uuid();
