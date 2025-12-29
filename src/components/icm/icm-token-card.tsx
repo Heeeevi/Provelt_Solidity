@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import { ExternalLink, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  useICMPrice, 
-  formatPrice, 
-  formatLargeNumber, 
+import {
+  useICMPrice,
+  formatPrice,
+  formatLargeNumber,
   formatPercentage,
   ICM_TOKEN_ADDRESS,
   ICM_LINKS,
@@ -37,7 +37,7 @@ export function ICMTokenCard({ className, compact = false }: ICMTokenCardProps) 
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-purple-500 flex items-center justify-center">
           <span className="text-xs font-bold text-white">ICM</span>
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white truncate">$ICM</p>
           {isLoading ? (
@@ -58,9 +58,9 @@ export function ICMTokenCard({ className, compact = false }: ICMTokenCardProps) 
             </div>
           ) : null}
         </div>
-        
+
         <a
-          href={ICM_LINKS.jupiter}
+          href={ICM_LINKS.dexscreener}
           target="_blank"
           rel="noopener noreferrer"
           className="p-1.5 rounded-lg hover:bg-surface-700 transition-colors"
@@ -85,12 +85,12 @@ export function ICMTokenCard({ className, compact = false }: ICMTokenCardProps) 
               <p className="text-xs text-surface-400">Internet Capital Markets</p>
             </div>
           </div>
-          
+
           {priceData && (
             <div className={cn(
               'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
-              isPositive 
-                ? 'bg-green-500/20 text-green-400' 
+              isPositive
+                ? 'bg-green-500/20 text-green-400'
                 : 'bg-red-500/20 text-red-400'
             )}>
               {isPositive ? (
@@ -119,7 +119,7 @@ export function ICMTokenCard({ className, compact = false }: ICMTokenCardProps) 
                 ${formatPrice(priceData.price)}
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 rounded-lg bg-surface-800/50">
                 <p className="text-xs text-surface-400">Market Cap</p>
@@ -139,7 +139,7 @@ export function ICMTokenCard({ className, compact = false }: ICMTokenCardProps) 
 
         {/* Actions */}
         <div className="flex gap-2 mt-4">
-          <a href={ICM_LINKS.jupiter} target="_blank" rel="noopener noreferrer" className="flex-1">
+          <a href={ICM_LINKS.dexscreener} target="_blank" rel="noopener noreferrer" className="flex-1">
             <Button
               variant="default"
               size="sm"

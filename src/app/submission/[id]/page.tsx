@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  Heart, 
-  MessageCircle, 
-  Share2, 
+import {
+  ChevronLeft,
+  Heart,
+  MessageCircle,
+  Share2,
   Award,
   Trophy,
   ExternalLink,
@@ -39,7 +39,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
   const submissionId = params.id;
   const router = useRouter();
   const { user } = useAuth();
-  
+
   const [item, setItem] = useState<FeedItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +141,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
   if (isLoading) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Loading..."
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.push('/feed')}>
@@ -160,7 +160,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
   if (error || !item) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Submission"
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.push('/feed')}>
@@ -188,7 +188,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
 
   return (
     <PageContainer className="pb-24">
-      <Header 
+      <Header
         title="Proof"
         leftAction={
           <Button variant="ghost" size="icon" onClick={() => router.push('/feed')}>
@@ -303,7 +303,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
           {/* External Link - NFT Metadata */}
           {submission.nft_metadata_uri && (
             <CardContent className="p-4 pt-0">
-              <a 
+              <a
                 href={submission.nft_metadata_uri}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -320,15 +320,15 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
         <Card className="bg-surface-900 border-surface-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-around">
-              <button 
+              <button
                 onClick={handleLike}
                 className="flex flex-col items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-800 transition-colors"
               >
-                <Heart 
+                <Heart
                   className={cn(
                     "w-6 h-6 transition-colors",
                     isLiked ? "fill-red-500 text-red-500" : "text-surface-400"
-                  )} 
+                  )}
                 />
                 <span className={cn(
                   "text-sm",
@@ -338,7 +338,7 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
                 </span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setShowShareModal(true)}
                 className="flex flex-col items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-800 transition-colors"
               >
@@ -347,8 +347,8 @@ export default function SubmissionPage({ params }: { params: { id: string } }) {
               </button>
 
               {submission.nft_mint_address && (
-                <a 
-                  href={`https://explorer.solana.com/address/${submission.nft_mint_address}?cluster=devnet`}
+                <a
+                  href={`https://sepolia.mantlescan.xyz/address/${submission.nft_mint_address}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-col items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-800 transition-colors"

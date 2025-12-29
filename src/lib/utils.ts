@@ -84,15 +84,15 @@ export function getBaseUrl(): string {
  */
 export function formatTimeRemaining(endDate: Date, now: Date = new Date()): string {
   const diffMs = endDate.getTime() - now.getTime();
-  
+
   if (diffMs <= 0) return 'Ended';
-  
+
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffHours / 24);
-  
+
   if (diffDays > 0) return `${diffDays}d`;
   if (diffHours > 0) return `${diffHours}h`;
-  
+
   const diffMins = Math.floor(diffMs / (1000 * 60));
   return `${diffMins}m`;
 }
@@ -108,14 +108,15 @@ export function formatShortDate(date: Date): string {
 }
 
 /**
- * Get Solana explorer URL for an address or transaction
+ * Get Mantle explorer URL for an address or transaction
  */
 export function getExplorerUrl(
-  addressOrTx: string, 
+  addressOrTx: string,
   type: 'address' | 'tx' = 'address',
-  network: 'mainnet-beta' | 'devnet' | 'testnet' = 'devnet'
+  network: 'mainnet' | 'sepolia' = 'sepolia'
 ): string {
-  const baseUrl = 'https://explorer.solana.com';
-  const cluster = network === 'mainnet-beta' ? '' : `?cluster=${network}`;
-  return `${baseUrl}/${type}/${addressOrTx}${cluster}`;
+  const baseUrl = network === 'mainnet'
+    ? 'https://mantlescan.xyz'
+    : 'https://sepolia.mantlescan.xyz';
+  return `${baseUrl}/${type}/${addressOrTx}`;
 }

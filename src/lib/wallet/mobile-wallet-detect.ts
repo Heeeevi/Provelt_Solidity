@@ -1,6 +1,9 @@
 /**
  * Mobile Wallet Detection & Deep Linking
- * Handles auto-detection and connection for mobile wallet apps
+ * Handles auto-detection and connection for EVM mobile wallet apps
+ * 
+ * Note: With RainbowKit, most mobile wallet handling is automatic.
+ * This file provides utility functions for detection purposes.
  */
 
 export interface MobileWallet {
@@ -13,31 +16,39 @@ export interface MobileWallet {
   isInstalled?: boolean;
 }
 
-// Popular Solana mobile wallets
+// Popular EVM mobile wallets
 export const MOBILE_WALLETS: MobileWallet[] = [
   {
-    name: 'Phantom',
-    icon: '/wallets/phantom.svg',
-    deepLink: 'phantom://',
-    universalLink: 'https://phantom.app/ul/browse/',
-    appStoreUrl: 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=app.phantom',
+    name: 'MetaMask',
+    icon: '/wallets/metamask.svg',
+    deepLink: 'metamask://',
+    universalLink: 'https://metamask.app.link/dapp/',
+    appStoreUrl: 'https://apps.apple.com/app/metamask/id1438144202',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=io.metamask',
   },
   {
-    name: 'Solflare',
-    icon: '/wallets/solflare.svg',
-    deepLink: 'solflare://',
-    universalLink: 'https://solflare.com/ul/browse/',
-    appStoreUrl: 'https://apps.apple.com/app/solflare/id1580902717',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.solflare.mobile',
+    name: 'Rainbow',
+    icon: '/wallets/rainbow.svg',
+    deepLink: 'rainbow://',
+    universalLink: 'https://rnbwapp.com/',
+    appStoreUrl: 'https://apps.apple.com/app/rainbow-ethereum-wallet/id1457119021',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=me.rainbow',
   },
   {
-    name: 'Glow',
-    icon: '/wallets/glow.svg',
-    deepLink: 'glow://',
-    universalLink: 'https://glow.app/ul/browse/',
-    appStoreUrl: 'https://apps.apple.com/app/glow-solana-wallet/id1599584512',
-    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.luma.wallet.prod',
+    name: 'Coinbase Wallet',
+    icon: '/wallets/coinbase.svg',
+    deepLink: 'cbwallet://',
+    universalLink: 'https://go.cb-w.com/',
+    appStoreUrl: 'https://apps.apple.com/app/coinbase-wallet/id1278383455',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=org.toshi',
+  },
+  {
+    name: 'Trust Wallet',
+    icon: '/wallets/trust.svg',
+    deepLink: 'trust://',
+    universalLink: 'https://link.trustwallet.com/',
+    appStoreUrl: 'https://apps.apple.com/app/trust-crypto-bitcoin-wallet/id1288339409',
+    playStoreUrl: 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp',
   },
 ];
 
@@ -46,7 +57,7 @@ export const MOBILE_WALLETS: MobileWallet[] = [
  */
 export function isMobile(): boolean {
   if (typeof window === 'undefined') return false;
-  
+
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
@@ -69,19 +80,19 @@ export function isAndroid(): boolean {
 }
 
 /**
- * Check if Phantom is available (either extension or in-app browser)
+ * Check if MetaMask is available
  */
-export function isPhantomInstalled(): boolean {
+export function isMetaMaskInstalled(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!(window as any).phantom?.solana?.isPhantom;
+  return !!(window as any).ethereum?.isMetaMask;
 }
 
 /**
- * Check if Solflare is available
+ * Check if any EVM wallet is available
  */
-export function isSolflareInstalled(): boolean {
+export function isWalletInstalled(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!(window as any).solflare?.isSolflare;
+  return !!(window as any).ethereum;
 }
 
 /**
@@ -89,12 +100,12 @@ export function isSolflareInstalled(): boolean {
  */
 export function isInWalletBrowser(): boolean {
   if (typeof window === 'undefined') return false;
-  
-  const isPhantom = !!(window as any).phantom?.solana?.isPhantom;
-  const isSolflare = !!(window as any).solflare?.isSolflare;
-  const isGlow = !!(window as any).glow;
-  
-  return isPhantom || isSolflare || isGlow;
+
+  const eth = (window as any).ethereum;
+  if (!eth) return false;
+
+  // Check for various in-app browser indicators
+  return eth.isMetaMask || eth.isCoinbaseWallet || eth.isRainbow || eth.isTrust;
 }
 
 /**
@@ -106,21 +117,12 @@ export function getCurrentUrl(): string {
 }
 
 /**
- * Open app in Phantom's in-app browser
+ * Open app in MetaMask's in-app browser
  */
-export function openInPhantom(url?: string): void {
+export function openInMetaMask(url?: string): void {
   const targetUrl = url || window.location.href;
-  const phantomUrl = `https://phantom.app/ul/browse/${encodeURIComponent(targetUrl)}?ref=${encodeURIComponent(window.location.origin)}`;
-  window.location.href = phantomUrl;
-}
-
-/**
- * Open app in Solflare's in-app browser  
- */
-export function openInSolflare(url?: string): void {
-  const targetUrl = url || window.location.href;
-  const solflareUrl = `https://solflare.com/ul/v1/browse/${encodeURIComponent(targetUrl)}?ref=${encodeURIComponent(window.location.origin)}`;
-  window.location.href = solflareUrl;
+  const metamaskUrl = `https://metamask.app.link/dapp/${targetUrl.replace(/^https?:\/\//, '')}`;
+  window.location.href = metamaskUrl;
 }
 
 /**
@@ -137,20 +139,20 @@ export function getStoreUrl(wallet: MobileWallet): string {
  */
 export function openWalletApp(wallet: MobileWallet, fallbackToStore = true): void {
   const currentUrl = getCurrentUrl();
-  
+
   // Try universal link first (works better on iOS)
   const universalUrl = `${wallet.universalLink}${currentUrl}`;
-  
+
   // Create a hidden iframe to try opening the app
   const iframe = document.createElement('iframe');
   iframe.style.display = 'none';
   iframe.src = wallet.deepLink;
   document.body.appendChild(iframe);
-  
+
   // Set timeout to redirect to universal link or store
   setTimeout(() => {
     document.body.removeChild(iframe);
-    
+
     if (fallbackToStore) {
       // Try universal link, then store
       window.location.href = universalUrl;
@@ -164,9 +166,8 @@ export function openWalletApp(wallet: MobileWallet, fallbackToStore = true): voi
 export function detectAvailableWallets(): MobileWallet[] {
   return MOBILE_WALLETS.map(wallet => ({
     ...wallet,
-    isInstalled: 
-      (wallet.name === 'Phantom' && isPhantomInstalled()) ||
-      (wallet.name === 'Solflare' && isSolflareInstalled()) ||
-      false
+    isInstalled:
+      (wallet.name === 'MetaMask' && isMetaMaskInstalled()) ||
+      isWalletInstalled()
   }));
 }

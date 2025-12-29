@@ -53,8 +53,8 @@ export default function ICMPage() {
               </div>
             </div>
             <p className="text-sm text-surface-300 leading-relaxed">
-              ICM.RUN is the first on-chain ICM incubator helping projects tokenize 
-              and launch on Solana. PROVELT integrates with ICM to bring exclusive 
+              ICM.RUN is the first on-chain ICM incubator helping projects tokenize
+              and launch. PROVELT integrates with ICM to bring exclusive
               challenges and badges for the ICM ecosystem.
             </p>
           </div>
@@ -121,7 +121,7 @@ export default function ICMPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-brand-500">2</span>
@@ -133,7 +133,7 @@ export default function ICMPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-brand-500">3</span>
@@ -145,7 +145,7 @@ export default function ICMPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-brand-500">4</span>
@@ -172,7 +172,7 @@ export default function ICMPage() {
               Apply to ICM Incubator
             </Button>
           </a>
-          
+
           <Button
             variant="outline"
             size="lg"

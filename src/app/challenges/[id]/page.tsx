@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  Target, 
-  Clock, 
-  Trophy, 
-  Users, 
+import {
+  Target,
+  Clock,
+  Trophy,
+  Users,
   ChevronLeft,
   Upload,
   Share2,
@@ -61,7 +61,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
   if (isLoading) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Loading..."
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -81,7 +81,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
   if (error || !challenge) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Challenge"
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -90,7 +90,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
           }
         />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <ErrorState 
+          <ErrorState
             message={error?.message || 'Challenge not found'}
             onRetry={refetch}
           />
@@ -110,7 +110,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
         url={getChallengeShareUrl(challengeId)}
       />
 
-      <Header 
+      <Header
         title={challenge.title}
         leftAction={
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -145,7 +145,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
               <h1 className="text-xl font-bold text-white">{challenge.title}</h1>
             </div>
           </div>
-          
+
           <CardContent className="p-4">
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4 py-4 border-b border-surface-800">
@@ -181,8 +181,8 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
                     {timeRemaining} left
                   </span>
                 </div>
-                <Progress 
-                  value={challenge.submission_count} 
+                <Progress
+                  value={challenge.submission_count}
                   max={100}
                   className="h-2"
                 />
@@ -238,16 +238,16 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
                 </CardHeader>
                 <CardContent className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-xl bg-surface-800 flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={challenge.badge_image_url} 
-                      alt="Badge" 
+                    <img
+                      src={challenge.badge_image_url}
+                      alt="Badge"
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
                     <p className="text-surface-200 font-medium">Completion Badge</p>
                     <p className="text-surface-500 text-sm mt-1">
-                      Minted as a compressed NFT on Solana
+                      Minted as an ERC-721 NFT on Mantle
                     </p>
                   </div>
                 </CardContent>
@@ -282,7 +282,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
                             @{(submission as any).profile?.username || 'user'}
                           </p>
                         </div>
-                        <Badge 
+                        <Badge
                           variant={submission.status === 'approved' ? 'default' : 'secondary'}
                           className="ml-auto"
                         >
@@ -310,8 +310,8 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
         {isActive && (
           <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-surface-950 via-surface-950 to-transparent">
             <Link href={`/challenges/${challengeId}/submit`}>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 size="lg"
                 disabled={hasSubmitted}
               >

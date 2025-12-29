@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   Loader2,
   CheckCircle,
   XCircle,
@@ -37,7 +37,7 @@ export default function AdminReviewPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { userId, isAuthenticated } = useAuth();
-  
+
   const [filter, setFilter] = useState<FilterStatus>('pending');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -98,7 +98,7 @@ export default function AdminReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ submissionId, action: 'approve' }),
       });
-      
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       return data;
@@ -121,7 +121,7 @@ export default function AdminReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ submissionId, action: 'reject', rejectionReason: reason }),
       });
-      
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       return data;
@@ -141,7 +141,7 @@ export default function AdminReviewPage() {
 
   return (
     <PageContainer>
-      <Header 
+      <Header
         title="Review Submissions"
         leftAction={
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -185,11 +185,10 @@ export default function AdminReviewPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-3 rounded-lg flex items-center gap-2 ${
-              message.type === 'error' 
-                ? 'bg-red-500/20 text-red-400' 
+            className={`p-3 rounded-lg flex items-center gap-2 ${message.type === 'error'
+                ? 'bg-red-500/20 text-red-400'
                 : 'bg-emerald-500/20 text-emerald-400'
-            }`}
+              }`}
           >
             {message.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
             <span className="text-sm">{message.text}</span>
@@ -235,229 +234,229 @@ export default function AdminReviewPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-              <div
-                className={cn(
-                  "cursor-pointer transition-colors rounded-xl",
-                  selectedSubmission?.id === submission.id 
-                    ? "ring-2 ring-brand-500" 
-                    : ""
-                )}
-                onClick={() => setSelectedSubmission(
-                  selectedSubmission?.id === submission.id ? null : submission
-                )}
-              >
-                <Card 
+                <div
                   className={cn(
-                    "overflow-hidden",
-                    selectedSubmission?.id === submission.id 
-                      ? "bg-surface-800/50" 
-                      : "hover:bg-surface-800/50"
+                    "cursor-pointer transition-colors rounded-xl",
+                    selectedSubmission?.id === submission.id
+                      ? "ring-2 ring-brand-500"
+                      : ""
+                  )}
+                  onClick={() => setSelectedSubmission(
+                    selectedSubmission?.id === submission.id ? null : submission
                   )}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      {/* Thumbnail */}
-                      <div className="w-16 h-16 rounded-lg bg-surface-800 overflow-hidden shrink-0">
-                        {submission.media_url ? (
-                          submission.media_type === 'video' ? (
-                            <div className="relative w-full h-full">
-                              <video 
-                                src={submission.media_url} 
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <Play className="w-6 h-6 text-white" />
-                              </div>
-                            </div>
-                          ) : (
-                            <img 
-                              src={submission.media_url} 
-                              alt="" 
-                              className="w-full h-full object-cover"
-                            />
-                          )
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Trophy className="w-6 h-6 text-surface-600" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar size="sm">
-                              <AvatarImage src={submission.profile?.avatar_url} />
-                              <AvatarFallback>
-                                {submission.profile?.display_name?.[0] || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                {submission.profile?.display_name || truncateAddress(submission.user_id)}
-                              </p>
-                              <p className="text-xs text-surface-500">
-                                {formatRelativeTime(submission.created_at)}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge 
-                            className={cn(
-                              submission.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
-                              submission.status === 'approved' && 'bg-green-500/20 text-green-400',
-                              submission.status === 'rejected' && 'bg-red-500/20 text-red-400',
-                            )}
-                          >
-                            {submission.status}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-surface-400 mt-1">
-                          {submission.challenge?.title || 'Unknown Challenge'}
-                        </p>
-                        {submission.caption && (
-                          <p className="text-xs text-surface-500 mt-1 line-clamp-1">
-                            {submission.caption}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Expanded Content */}
-                    <AnimatePresence>
-                      {selectedSubmission?.id === submission.id && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="pt-4 mt-4 border-t border-surface-700 space-y-4">
-                            {/* Media Preview */}
-                            {submission.media_url && (
-                              <div className="rounded-lg overflow-hidden bg-surface-800 max-h-64">
-                                {submission.media_type === 'video' ? (
-                                  <video 
-                                    src={submission.media_url} 
-                                    controls 
-                                    className="w-full max-h-64 object-contain"
-                                  />
-                                ) : (
-                                  <img 
-                                    src={submission.media_url} 
-                                    alt="" 
-                                    className="w-full max-h-64 object-contain"
-                                  />
-                                )}
-                              </div>
-                            )}
-
-                            {/* Caption */}
-                            {submission.caption && (
-                              <p className="text-sm text-surface-300">
-                                {submission.caption}
-                              </p>
-                            )}
-
-                            {/* Challenge Info */}
-                            <div className="p-3 rounded-lg bg-surface-800/50">
-                              <p className="text-xs text-surface-500 mb-1">Challenge</p>
-                              <p className="text-sm font-medium text-white">
-                                {submission.challenge?.title}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {submission.challenge?.difficulty}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  +{submission.challenge?.points} XP
-                                </Badge>
-                              </div>
-                            </div>
-
-                            {/* Actions for Pending */}
-                            {submission.status === 'pending' && (
-                              <div className="space-y-3">
-                                <Textarea
-                                  placeholder="Rejection reason (optional)..."
-                                  value={rejectionReason}
-                                  onChange={(e) => setRejectionReason(e.target.value)}
-                                  rows={2}
+                  <Card
+                    className={cn(
+                      "overflow-hidden",
+                      selectedSubmission?.id === submission.id
+                        ? "bg-surface-800/50"
+                        : "hover:bg-surface-800/50"
+                    )}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex gap-3">
+                        {/* Thumbnail */}
+                        <div className="w-16 h-16 rounded-lg bg-surface-800 overflow-hidden shrink-0">
+                          {submission.media_url ? (
+                            submission.media_type === 'video' ? (
+                              <div className="relative w-full h-full">
+                                <video
+                                  src={submission.media_url}
+                                  className="w-full h-full object-cover"
                                 />
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                    onClick={() => rejectMutation.mutate({
-                                      submissionId: submission.id,
-                                      reason: rejectionReason,
-                                    })}
-                                    disabled={rejectMutation.isPending || approveMutation.isPending}
-                                  >
-                                    {rejectMutation.isPending ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <>
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        Reject
-                                      </>
-                                    )}
-                                  </Button>
-                                  <Button
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                    onClick={() => approveMutation.mutate(submission.id)}
-                                    disabled={rejectMutation.isPending || approveMutation.isPending}
-                                  >
-                                    {approveMutation.isPending ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <>
-                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                        Approve & Mint
-                                      </>
-                                    )}
-                                  </Button>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <Play className="w-6 h-6 text-white" />
                                 </div>
                               </div>
-                            )}
+                            ) : (
+                              <img
+                                src={submission.media_url}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            )
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Trophy className="w-6 h-6 text-surface-600" />
+                            </div>
+                          )}
+                        </div>
 
-                            {/* NFT Info for Approved */}
-                            {submission.status === 'approved' && submission.nft_mint_address && (
-                              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                <p className="text-xs text-emerald-400 mb-1">NFT Badge Minted</p>
-                                <p className="text-sm text-white font-mono break-all">
-                                  {submission.nft_mint_address}
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Avatar size="sm">
+                                <AvatarImage src={submission.profile?.avatar_url} />
+                                <AvatarFallback>
+                                  {submission.profile?.display_name?.[0] || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="text-sm font-medium text-white">
+                                  {submission.profile?.display_name || truncateAddress(submission.user_id)}
                                 </p>
-                                {submission.nft_tx_signature && (
-                                  <a
-                                    href={`https://explorer.solana.com/tx/${submission.nft_tx_signature}?cluster=devnet`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-xs text-brand-400 mt-2 hover:underline"
-                                  >
-                                    View on Explorer
-                                    <ExternalLink className="w-3 h-3" />
-                                  </a>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Rejection Reason */}
-                            {submission.status === 'rejected' && submission.rejection_reason && (
-                              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                                <p className="text-xs text-red-400 mb-1">Rejection Reason</p>
-                                <p className="text-sm text-white">
-                                  {submission.rejection_reason}
+                                <p className="text-xs text-surface-500">
+                                  {formatRelativeTime(submission.created_at)}
                                 </p>
                               </div>
-                            )}
+                            </div>
+                            <Badge
+                              className={cn(
+                                submission.status === 'pending' && 'bg-yellow-500/20 text-yellow-400',
+                                submission.status === 'approved' && 'bg-green-500/20 text-green-400',
+                                submission.status === 'rejected' && 'bg-red-500/20 text-red-400',
+                              )}
+                            >
+                              {submission.status}
+                            </Badge>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </CardContent>
-                </Card>
-              </div>
+                          <p className="text-xs text-surface-400 mt-1">
+                            {submission.challenge?.title || 'Unknown Challenge'}
+                          </p>
+                          {submission.caption && (
+                            <p className="text-xs text-surface-500 mt-1 line-clamp-1">
+                              {submission.caption}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expanded Content */}
+                      <AnimatePresence>
+                        {selectedSubmission?.id === submission.id && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-4 mt-4 border-t border-surface-700 space-y-4">
+                              {/* Media Preview */}
+                              {submission.media_url && (
+                                <div className="rounded-lg overflow-hidden bg-surface-800 max-h-64">
+                                  {submission.media_type === 'video' ? (
+                                    <video
+                                      src={submission.media_url}
+                                      controls
+                                      className="w-full max-h-64 object-contain"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={submission.media_url}
+                                      alt=""
+                                      className="w-full max-h-64 object-contain"
+                                    />
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Caption */}
+                              {submission.caption && (
+                                <p className="text-sm text-surface-300">
+                                  {submission.caption}
+                                </p>
+                              )}
+
+                              {/* Challenge Info */}
+                              <div className="p-3 rounded-lg bg-surface-800/50">
+                                <p className="text-xs text-surface-500 mb-1">Challenge</p>
+                                <p className="text-sm font-medium text-white">
+                                  {submission.challenge?.title}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {submission.challenge?.difficulty}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    +{submission.challenge?.points} XP
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Actions for Pending */}
+                              {submission.status === 'pending' && (
+                                <div className="space-y-3">
+                                  <Textarea
+                                    placeholder="Rejection reason (optional)..."
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    rows={2}
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                      onClick={() => rejectMutation.mutate({
+                                        submissionId: submission.id,
+                                        reason: rejectionReason,
+                                      })}
+                                      disabled={rejectMutation.isPending || approveMutation.isPending}
+                                    >
+                                      {rejectMutation.isPending ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <XCircle className="w-4 h-4 mr-2" />
+                                          Reject
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      className="flex-1 bg-green-600 hover:bg-green-700"
+                                      onClick={() => approveMutation.mutate(submission.id)}
+                                      disabled={rejectMutation.isPending || approveMutation.isPending}
+                                    >
+                                      {approveMutation.isPending ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="w-4 h-4 mr-2" />
+                                          Approve & Mint
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* NFT Info for Approved */}
+                              {submission.status === 'approved' && submission.nft_mint_address && (
+                                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                  <p className="text-xs text-emerald-400 mb-1">NFT Badge Minted</p>
+                                  <p className="text-sm text-white font-mono break-all">
+                                    {submission.nft_mint_address}
+                                  </p>
+                                  {submission.nft_tx_signature && (
+                                    <a
+                                      href={`https://sepolia.mantlescan.xyz/tx/${submission.nft_tx_signature}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs text-brand-400 mt-2 hover:underline"
+                                    >
+                                      View on Explorer
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Rejection Reason */}
+                              {submission.status === 'rejected' && submission.rejection_reason && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                  <p className="text-xs text-red-400 mb-1">Rejection Reason</p>
+                                  <p className="text-sm text-white">
+                                    {submission.rejection_reason}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </CardContent>
+                  </Card>
+                </div>
               </motion.div>
             ))}
           </div>

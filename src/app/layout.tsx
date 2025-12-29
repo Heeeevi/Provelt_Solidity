@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 });
@@ -14,7 +14,7 @@ const LOGO_URL = 'https://res.cloudinary.com/dtgqtofh6/image/upload/v1765375868/
 export const metadata: Metadata = {
   title: 'PROVELT - Turn Your Skills Into Income | Verified Proof Platform',
   description: 'Monetize your skills with verified proof. Complete challenges in coding, trading, design, fitness & more. Build your portfolio, earn badges, and get discovered by clients and employers.',
-  keywords: ['Skill monetization', 'Verified portfolio', 'Proof of skills', 'Freelance', 'Personal branding', 'NFT badges', 'Trading proof', 'Coding challenges', 'Web3', 'Solana'],
+  keywords: ['Skill monetization', 'Verified portfolio', 'Proof of skills', 'Freelance', 'Personal branding', 'NFT badges', 'Trading proof', 'Coding challenges', 'Web3', 'Mantle', 'EVM'],
   authors: [{ name: 'PROVELT Team' }],
   icons: {
     icon: LOGO_URL,
@@ -57,7 +57,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" style={{ backgroundColor: '#09090b' }}>
-      <body 
+      <body
         className={`${inter.variable} font-sans min-h-screen bg-surface-950 text-surface-50 antialiased`}
         style={{ backgroundColor: '#09090b', color: '#fafafa', minHeight: '100vh' }}
       >

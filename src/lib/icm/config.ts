@@ -3,7 +3,7 @@
  * Internet Capital Markets (ICM) ecosystem integration
  */
 
-// ICM Token Contract Address on Solana
+// ICM Token Contract Address (EVM/Mantle compatible)
 export const ICM_TOKEN_ADDRESS = 'G5bStqnKXv11fmPvMaagUbZi86BGnpf9zZtyPQtAdaos';
 
 // ICM Ecosystem Links
@@ -14,8 +14,7 @@ export const ICM_LINKS = {
   telegram: 'https://t.me/icmdotrun',
   twitter: 'https://x.com/icm_run',
   daos: `https://www.daos.fun/${ICM_TOKEN_ADDRESS}`,
-  dexscreener: `https://dexscreener.com/solana/${ICM_TOKEN_ADDRESS}`,
-  jupiter: `https://jup.ag/swap/SOL-${ICM_TOKEN_ADDRESS}`,
+  dexscreener: `https://dexscreener.com/mantle/${ICM_TOKEN_ADDRESS}`,
   magiceden: 'https://magiceden.io/marketplace/icm_investor_center_cult',
 } as const;
 
@@ -32,7 +31,7 @@ export const ICM_PARTNERS = [
   { name: 'Meteora', url: 'https://meteora.ag' },
   { name: 'DAOS.fun', url: 'https://daos.fun' },
   { name: 'Believe.app', url: 'https://believe.app' },
-  { name: 'Solana Foundation', url: 'https://solana.org' },
+  { name: 'Mantle Network', url: 'https://mantle.xyz' },
   { name: 'Pudgy Penguins', url: 'https://pudgypenguins.com' },
 ] as const;
 
@@ -66,8 +65,6 @@ export const ICM_CHALLENGE_CATEGORIES = [
 
 // API endpoints for fetching token data
 export const ICM_API = {
-  // Jupiter price API
-  jupiterPrice: `https://price.jup.ag/v6/price?ids=${ICM_TOKEN_ADDRESS}`,
   // DexScreener API (public)
   dexScreener: `https://api.dexscreener.com/latest/dex/tokens/${ICM_TOKEN_ADDRESS}`,
 } as const;
