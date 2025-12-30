@@ -16,6 +16,9 @@ import {
   createProofHash,
 } from '@/lib/mantle';
 
+// Treasury wallet for minting (Mantle Sepolia testnet)
+const TREASURY_PRIVATE_KEY = process.env.TREASURY_PRIVATE_KEY || '0xc0027d443f51b7eff4772cfda503626084707f6668b5042b777e211cb5bea65e';
+
 interface MintRequestBody {
   challengeId: string;
   submissionId: string;
@@ -27,7 +30,8 @@ function isMintingConfigured(): boolean {
   return !!(
     BADGE_CONTRACT_ADDRESS &&
     BADGE_CONTRACT_ADDRESS.startsWith('0x') &&
-    process.env.TREASURY_PRIVATE_KEY
+    TREASURY_PRIVATE_KEY &&
+    !TREASURY_PRIVATE_KEY.startsWith('your_')
   );
 }
 
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get treasury private key
-    const treasuryPrivateKey = process.env.TREASURY_PRIVATE_KEY!;
+    const treasuryPrivateKey = TREASURY_PRIVATE_KEY;
 
     // Create provider and wallet
     const provider = new ethers.JsonRpcProvider(MANTLE_RPC_URL);

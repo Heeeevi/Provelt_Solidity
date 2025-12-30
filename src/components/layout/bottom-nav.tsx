@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Target, User, Compass } from 'lucide-react';
+import { Home, Target, User, Compass, Coins } from 'lucide-react';
 
 const navItems = [
   { href: '/feed', icon: Home, label: 'Feed', onboardingId: 'nav-feed' },
   { href: '/challenges', icon: Target, label: 'Challenges', onboardingId: 'nav-challenges' },
+  { href: '/staking', icon: Coins, label: 'Earn', onboardingId: 'nav-staking' },
   { href: '/explore', icon: Compass, label: 'Explore', onboardingId: 'nav-explore' },
   { href: '/profile', icon: User, label: 'Profile', onboardingId: 'nav-profile' },
 ];

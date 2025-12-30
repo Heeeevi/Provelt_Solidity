@@ -9,27 +9,33 @@ import {
   createProofHash,
 } from '@/lib/mantle';
 
-// Create supabase client 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY &&
-  process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_service_role_key'
-  ? process.env.SUPABASE_SERVICE_ROLE_KEY
-  : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Fallback values for development
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://elkgqykpfxbhznpxksdn.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa2dxeWtwZnhiaHpucHhrc2RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzA1Mjk3MiwiZXhwIjoyMDgyNjI4OTcyfQ.QV0auTApVR0Get0Ii5rghPA_Ta6ngDG-EERUm7En60Q';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa2dxeWtwZnhiaHpucHhrc2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTI5NzIsImV4cCI6MjA4MjYyODk3Mn0._flz8aUNKcsy-Ac5oz73hIOekbjCaDyFB7RGI8zhvtc';
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+// Create supabase client 
+const supabaseKey = SUPABASE_SERVICE_KEY && SUPABASE_SERVICE_KEY !== 'your_service_role_key'
+  ? SUPABASE_SERVICE_KEY
+  : SUPABASE_ANON_KEY;
+
+const supabaseAdmin = createClient(SUPABASE_URL, supabaseKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
   }
 });
 
+// Treasury wallet for minting (Mantle Sepolia testnet)
+const TREASURY_PRIVATE_KEY = process.env.TREASURY_PRIVATE_KEY || '0xc0027d443f51b7eff4772cfda503626084707f6668b5042b777e211cb5bea65e';
+
 // Check if contract minting is configured
 function isMintingConfigured(): boolean {
   return !!(
     BADGE_CONTRACT_ADDRESS &&
     BADGE_CONTRACT_ADDRESS.startsWith('0x') &&
-    process.env.TREASURY_PRIVATE_KEY &&
-    !process.env.TREASURY_PRIVATE_KEY.startsWith('your_')
+    TREASURY_PRIVATE_KEY &&
+    !TREASURY_PRIVATE_KEY.startsWith('your_')
   );
 }
 
@@ -153,7 +159,7 @@ export async function POST(request: NextRequest) {
     if (isMintingConfigured()) {
       try {
         const provider = new ethers.JsonRpcProvider(MANTLE_RPC_URL);
-        const wallet = new ethers.Wallet(process.env.TREASURY_PRIVATE_KEY!, provider);
+        const wallet = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
         const contract = new ethers.Contract(BADGE_CONTRACT_ADDRESS, PROVELT_BADGE_ABI, wallet);
 
         // Create proof hash

@@ -32,6 +32,7 @@ module.exports = {
             url: process.env.NEXT_PUBLIC_MANTLE_RPC_URL || "https://rpc.sepolia.mantle.xyz",
             chainId: 5003,
             accounts: getAccounts(),
+            timeout: 120000,
         },
         mantleMainnet: {
             url: "https://rpc.mantle.xyz",

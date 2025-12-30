@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Create supabase client with service role or anon key
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY && 
-  process.env.SUPABASE_SERVICE_ROLE_KEY !== 'your_service_role_key'
-  ? process.env.SUPABASE_SERVICE_ROLE_KEY 
-  : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// Fallback values for development
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://elkgqykpfxbhznpxksdn.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa2dxeWtwZnhiaHpucHhrc2RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzA1Mjk3MiwiZXhwIjoyMDgyNjI4OTcyfQ.QV0auTApVR0Get0Ii5rghPA_Ta6ngDG-EERUm7En60Q';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa2dxeWtwZnhiaHpucHhrc2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTI5NzIsImV4cCI6MjA4MjYyODk3Mn0._flz8aUNKcsy-Ac5oz73hIOekbjCaDyFB7RGI8zhvtc';
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+// Create supabase client with service role or anon key
+const supabaseKey = SUPABASE_SERVICE_KEY && SUPABASE_SERVICE_KEY !== 'your_service_role_key'
+  ? SUPABASE_SERVICE_KEY
+  : SUPABASE_ANON_KEY;
+
+const supabaseAdmin = createClient(SUPABASE_URL, supabaseKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
@@ -40,7 +43,7 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('user_id', userId);
       userBadges = { data: badges, error: badgeErr?.message };
-      
+
       const { data: subs, error: subErr } = await supabaseAdmin
         .from('submissions')
         .select('*, challenges(id, title, points)')
@@ -58,26 +61,26 @@ export async function GET(request: NextRequest) {
         .select('id, badges_count, submissions_count')
         .eq('wallet_address', walletAddress)
         .maybeSingle();
-      
+
       if (profile) {
         const { data: badges, error: badgeErr } = await supabaseAdmin
           .from('badge_nfts')
           .select('*')
           .eq('user_id', profile.id);
-        walletBadges = { 
+        walletBadges = {
           profile,
-          badges, 
-          error: badgeErr?.message 
+          badges,
+          error: badgeErr?.message
         };
-        
+
         const { data: subs, error: subErr } = await supabaseAdmin
           .from('submissions')
           .select('*, challenges(id, title, points)')
           .eq('user_id', profile.id)
           .order('created_at', { ascending: false });
-        walletSubmissions = { 
-          data: subs, 
-          error: subErr?.message 
+        walletSubmissions = {
+          data: subs,
+          error: subErr?.message
         };
       } else {
         walletBadges = { profile: null, badges: [], error: 'Profile not found' };

@@ -57,11 +57,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const walletAddress = address || null;
   const isWalletConnected = isConnected && !!address;
 
-  // User is authenticated if they have either Supabase session OR connected wallet
-  const isAuthenticated = !!user || isWalletConnected;
+  // User is authenticated ONLY if they have a Supabase session (after signing message)
+  // Just having wallet connected is not enough - they must complete the auth flow
+  const isAuthenticated = !!user;
 
-  // User ID: prefer Supabase user ID, fallback to wallet address
-  const userId = user?.id || walletAddress;
+  // User ID: Supabase user ID only (not wallet address) to ensure proper DB operations
+  const userId = user?.id || null;
 
   useEffect(() => {
     // Get initial Supabase session

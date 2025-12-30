@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { LOGO_URL, APP_NAME, APP_TAGLINE } from '@/lib/constants';
-import { CheckCircle, TrendingUp, Users, Zap, Award, Globe, DollarSign, Gift, Flame, Target } from 'lucide-react';
+import { CheckCircle, TrendingUp, Users, Zap, Award, Globe, DollarSign, Gift, Flame, Target, Coins, Lock, Unlock } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -12,7 +12,7 @@ export default function HomePage() {
         {/* Background Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-500/20 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-accent-500/10 via-transparent to-transparent" />
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="text-center">
             {/* Badge */}
@@ -20,7 +20,7 @@ export default function HomePage() {
               <Zap className="w-4 h-4 text-brand-400" />
               <span className="text-sm text-brand-300">Turn Your Skills Into Income</span>
             </div>
-            
+
             {/* Logo */}
             <div className="flex justify-center mb-6">
               <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shadow-2xl shadow-brand-500/20 ring-2 ring-brand-500/30">
@@ -33,25 +33,25 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            
+
             {/* App Name */}
             <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
               <span className="gradient-text">PROVE</span>
               <span className="text-white">LT</span>
             </h1>
-            
+
             {/* Tagline - More Inclusive */}
             <p className="mt-6 text-xl sm:text-2xl text-surface-300 max-w-3xl mx-auto font-medium">
               Your Skills Have Value. <span className="text-brand-400">Prove It.</span> Get Paid.
             </p>
-            
+
             {/* Description - Appeal to Non-Web3 Users */}
             <p className="mt-4 text-surface-400 max-w-2xl mx-auto text-lg">
-              Whether you&apos;re a coder, designer, trader, artist, or fitness enthusiast — 
-              complete challenges, build your verified portfolio, and unlock opportunities to 
+              Whether you&apos;re a coder, designer, trader, artist, or fitness enthusiast —
+              complete challenges, build your verified portfolio, and unlock opportunities to
               <span className="text-white font-medium"> monetize your expertise</span>.
             </p>
-            
+
             {/* Trust Indicators */}
             <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-surface-500">
               <span className="flex items-center gap-1">
@@ -67,7 +67,7 @@ export default function HomePage() {
                 Instant proof of skills
               </span>
             </div>
-            
+
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/login">
@@ -82,7 +82,7 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          
+
           {/* Value Proposition Cards */}
           <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6">
             <FeatureCard
@@ -101,7 +101,7 @@ export default function HomePage() {
               description="Share your achievements, connect with like-minded achievers, and get discovered by brands and clients looking for proven talent."
             />
           </div>
-          
+
           {/* How It Works Section */}
           <div className="mt-32">
             <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
@@ -110,7 +110,7 @@ export default function HomePage() {
             <p className="text-center text-surface-400 mb-12 max-w-xl mx-auto">
               No complicated setup. No crypto knowledge required. Just prove what you can do.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <StepCard
                 step={1}
@@ -138,7 +138,7 @@ export default function HomePage() {
             <p className="text-center text-surface-400 mb-12 max-w-xl mx-auto">
               Multiple ways to monetize your proven skills. No gatekeeping.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <EarnCard
                 icon={<Gift className="w-6 h-6 text-purple-400" />}
@@ -188,7 +188,7 @@ export default function HomePage() {
                     🔥 Build Your Streak, Multiply Your Rewards
                   </h2>
                   <p className="text-surface-400 mb-6">
-                    Complete at least one challenge every day to build your streak. 
+                    Complete at least one challenge every day to build your streak.
                     The longer your streak, the bigger your multiplier on XP and rewards!
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center md:justify-start">
@@ -204,8 +204,77 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          
-          {/* Who Is This For Section */}
+
+          {/* PRVLT Token Staking - NEW YIELD FEATURE */}
+          <div className="mt-32">
+            <div className="card bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 p-8 sm:p-12 rounded-2xl">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm mb-4">
+                  <Coins className="w-4 h-4" />
+                  Powered by Mantle Network
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                  💰 Stake Badges, Earn PRVLT Tokens
+                </h2>
+                <p className="text-surface-400 max-w-2xl mx-auto">
+                  Your badges aren&apos;t just proof — they&apos;re <span className="text-purple-400 font-semibold">yield-bearing assets</span>.
+                  Stake your earned badges and earn PRVLT tokens daily. Real crypto rewards for real skills.
+                </p>
+              </div>
+
+              {/* How Staking Works */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-surface-900/50 rounded-xl p-4 text-center">
+                  <div className="text-3xl mb-2">🏆</div>
+                  <p className="text-sm text-surface-300">Complete Challenge</p>
+                </div>
+                <div className="bg-surface-900/50 rounded-xl p-4 text-center">
+                  <div className="text-3xl mb-2">🎖️</div>
+                  <p className="text-sm text-surface-300">Earn Badge NFT</p>
+                </div>
+                <div className="bg-surface-900/50 rounded-xl p-4 text-center">
+                  <div className="text-3xl mb-2">🔒</div>
+                  <p className="text-sm text-surface-300">Stake in Vault</p>
+                </div>
+                <div className="bg-surface-900/50 rounded-xl p-4 text-center">
+                  <div className="text-3xl mb-2">💎</div>
+                  <p className="text-sm text-surface-300">Earn PRVLT Daily</p>
+                </div>
+              </div>
+
+              {/* Yield Rates */}
+              <div className="bg-surface-900/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4 text-center">📈 Daily Yield Rates</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-green-400 font-bold text-xl">1 PRVLT</p>
+                    <p className="text-surface-500 text-sm">Easy Badge</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-yellow-400 font-bold text-xl">3 PRVLT</p>
+                    <p className="text-surface-500 text-sm">Medium Badge</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-orange-400 font-bold text-xl">5 PRVLT</p>
+                    <p className="text-surface-500 text-sm">Hard Badge</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-red-400 font-bold text-xl">10 PRVLT</p>
+                    <p className="text-surface-500 text-sm">Expert Badge</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <Link href="/staking">
+                  <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
+                    <Coins className="w-5 h-5 mr-2" />
+                    Start Earning PRVLT →
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
           <div className="mt-32">
             <h2 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
               Perfect For Anyone Who Wants To
@@ -213,7 +282,7 @@ export default function HomePage() {
             <p className="text-center text-surface-400 mb-12 max-w-xl mx-auto">
               PROVELT helps you turn skills into opportunities, regardless of your background.
             </p>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <UseCase emoji="💼" text="Get hired faster with verified skills" />
               <UseCase emoji="🎨" text="Build a portfolio that stands out" />
@@ -225,7 +294,7 @@ export default function HomePage() {
               <UseCase emoji="🤝" text="Connect with other achievers" />
             </div>
           </div>
-          
+
           {/* Final CTA */}
           <div className="mt-32 text-center">
             <div className="card bg-gradient-to-r from-brand-500/10 to-accent-500/10 border-brand-500/20 p-8 sm:p-12 rounded-2xl">
@@ -234,7 +303,7 @@ export default function HomePage() {
                 Your Skills Are Worth More Than You Think
               </h2>
               <p className="text-surface-400 mb-6 max-w-xl mx-auto">
-                Join thousands of creators, developers, and professionals who are building 
+                Join thousands of creators, developers, and professionals who are building
                 their verified reputation and unlocking new opportunities.
               </p>
               <Link href="/auth/login">
@@ -250,13 +319,13 @@ export default function HomePage() {
   );
 }
 
-function FeatureCard({ 
-  icon, 
-  title, 
-  description 
-}: { 
-  icon: React.ReactNode; 
-  title: string; 
+function FeatureCard({
+  icon,
+  title,
+  description
+}: {
+  icon: React.ReactNode;
+  title: string;
   description: string;
 }) {
   return (

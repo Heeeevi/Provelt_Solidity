@@ -126,3 +126,42 @@ export async function getTotalMinted(): Promise<bigint> {
     const contract = getBadgeContract();
     return await contract.totalMinted();
 }
+
+// ===== PRVLT Token ABI =====
+export const PRVLT_TOKEN_ABI = [
+    'function name() view returns (string)',
+    'function symbol() view returns (string)',
+    'function decimals() view returns (uint8)',
+    'function totalSupply() view returns (uint256)',
+    'function balanceOf(address account) view returns (uint256)',
+    'function transfer(address to, uint256 amount) returns (bool)',
+    'function approve(address spender, uint256 amount) returns (bool)',
+    'function allowance(address owner, address spender) view returns (uint256)',
+    'event Transfer(address indexed from, address indexed to, uint256 value)',
+] as const;
+
+// ===== Staking Contract ABI =====
+export const STAKING_CONTRACT_ABI = [
+    // Read functions
+    'function badgeContract() view returns (address)',
+    'function rewardToken() view returns (address)',
+    'function baseRewardRate() view returns (uint256)',
+    'function difficultyMultiplier(uint8) view returns (uint256)',
+    'function stakes(uint256 tokenId) view returns (address owner, uint256 stakedAt, uint256 lastClaimAt, uint8 difficulty)',
+    'function userStakes(address user, uint256 index) view returns (uint256)',
+    'function pendingRewards(uint256 tokenId) view returns (uint256)',
+    'function totalPendingRewards(address user) view returns (uint256)',
+    'function getStakedTokens(address user) view returns (uint256[])',
+
+    // Write functions
+    'function stake(uint256 tokenId, uint8 difficulty)',
+    'function unstake(uint256 tokenId)',
+    'function claimRewards(uint256 tokenId)',
+    'function claimAllRewards()',
+
+    // Events
+    'event Staked(address indexed user, uint256 indexed tokenId, uint8 difficulty)',
+    'event Unstaked(address indexed user, uint256 indexed tokenId, uint256 rewards)',
+    'event RewardsClaimed(address indexed user, uint256 amount)',
+] as const;
+

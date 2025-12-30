@@ -53,13 +53,30 @@ const nextConfig = {
 
   // Webpack config for Solana packages and optimizations
   webpack: (config, { dev, isServer }) => {
-    // Fallbacks for Solana packages
+    // Fallbacks for Solana packages and wallet packages
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
       net: false,
       tls: false,
       crypto: false,
+      encoding: false,
+      'pino-pretty': false,
+    };
+
+    // Handle problematic packages for SSR
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push({
+        'idb-keyval': 'idb-keyval',
+        '@react-native-async-storage/async-storage': 'commonjs @react-native-async-storage/async-storage',
+      });
+    }
+
+    // Alias for packages that have SSR issues
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'idb-keyval': false,
     };
 
     // Production optimizations
@@ -77,10 +94,11 @@ const nextConfig = {
 
   // Environment variables that should be available on the client
   env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_SOLANA_NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK,
-    NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://elkgqykpfxbhznpxksdn.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsa2dxeWtwZnhiaHpucHhrc2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTI5NzIsImV4cCI6MjA4MjYyODk3Mn0._flz8aUNKcsy-Ac5oz73hIOekbjCaDyFB7RGI8zhvtc',
+    NEXT_PUBLIC_MANTLE_NETWORK: process.env.NEXT_PUBLIC_MANTLE_NETWORK || 'sepolia',
+    NEXT_PUBLIC_MANTLE_RPC_URL: process.env.NEXT_PUBLIC_MANTLE_RPC_URL || 'https://rpc.sepolia.mantle.xyz',
+    NEXT_PUBLIC_BADGE_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_BADGE_CONTRACT_ADDRESS || '0xc079d4dcfae3250ba38fbf9323676d1f53256ab5',
   },
 
   // Experimental features

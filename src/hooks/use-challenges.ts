@@ -19,11 +19,11 @@ function mapChallengeToUI(challenge: Challenge): ChallengeWithUI {
   const now = new Date();
   const startsAt = new Date(challenge.starts_at);
   const endsAt = new Date(challenge.ends_at);
-  
+
   let status: 'active' | 'upcoming' | 'ended' = 'ended';
   if (now < startsAt) status = 'upcoming';
   else if (now >= startsAt && now <= endsAt) status = 'active';
-  
+
   return {
     ...challenge,
     status,
@@ -51,7 +51,7 @@ interface UseChallengesOptions {
 // Fetch challenges by status
 export function useChallenges(options: UseChallengesOptions = {}) {
   const { status = 'active' } = options;
-  
+
   return useQuery({
     queryKey: challengeKeys.list(status),
     queryFn: async (): Promise<ChallengeWithUI[]> => {
@@ -177,48 +177,30 @@ export function useSubmitChallenge() {
 
   const mutation = useMutation({
     mutationFn: async ({ challengeId, userId, file, caption }: SubmitProofParams) => {
-      // 0. Ensure profile exists for this user (wallet address)
-      // Check if userId looks like a wallet address (not UUID)
-      const isWalletAddress = userId.length > 36; // Wallet addresses are longer than UUIDs
-      
+      // 0. Resolve userId to a valid Supabase profile ID
+      // If userId looks like a wallet address, lookup the profile ID
+      const isWalletAddress = userId.startsWith('0x') && userId.length === 42;
+
       if (isWalletAddress) {
-        // Check if profile exists
-        const { data: existingProfile } = await supabase
+        // Lookup profile by wallet address
+        const { data: existingProfile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('wallet_address', userId)
+          .eq('wallet_address', userId.toLowerCase())
           .single();
-        
-        if (!existingProfile) {
-          // Create profile for wallet user
-          const { data: newProfile, error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: crypto.randomUUID(), // Generate a new UUID
-              wallet_address: userId,
-              username: `user_${userId.slice(0, 8).toLowerCase()}`,
-              display_name: `${userId.slice(0, 4)}...${userId.slice(-4)}`,
-            })
-            .select()
-            .single();
-          
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            throw new Error('Failed to create user profile. Please try again.');
-          }
-          
-          // Use the new profile ID for submission
-          userId = newProfile.id;
-        } else {
-          // Use existing profile ID
-          userId = existingProfile.id;
+
+        if (profileError || !existingProfile) {
+          throw new Error('Please sign in first. Connect your wallet and sign the login message.');
         }
+
+        // Use the profile ID for submission
+        userId = existingProfile.id;
       }
 
       // 1. Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${challengeId}/${Date.now()}.${fileExt}`;
-      
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('submissions')
         .upload(fileName, file);
@@ -232,7 +214,7 @@ export function useSubmitChallenge() {
 
       // 3. Create submission record
       const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
-      
+
       const { data, error } = await supabase
         .from('submissions')
         .insert({
