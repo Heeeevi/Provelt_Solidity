@@ -127,7 +127,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
+        className="space-y-6 pb-32"
       >
         {/* Hero Section */}
         <Card className="overflow-hidden">

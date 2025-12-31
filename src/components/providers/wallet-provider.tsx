@@ -64,10 +64,13 @@ const mantleMainnet = {
 const isTestnet = process.env.NEXT_PUBLIC_MANTLE_NETWORK !== 'mainnet';
 const activeChain = isTestnet ? mantleSepolia : mantleMainnet;
 
-// Configure wagmi
+// Configure wagmi with proper mobile wallet support
+// Get WalletConnect Project ID from https://cloud.walletconnect.com
+const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '2c4cfc6e2ddae0f32d76a75d3d7c9c1d';
+
 const config = getDefaultConfig({
   appName: 'PROVELT',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'provelt-app',
+  projectId: WALLETCONNECT_PROJECT_ID,
   chains: [activeChain],
   ssr: true,
 });
