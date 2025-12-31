@@ -227,7 +227,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🌐 Links
 
-- **Live Demo**: provelts.netlify.app
+- **Live Demo**: https://provelts.netlify.app
 - **Documentation**: This README
 - **Smart Contracts**: [Mantlescan](https://sepolia.mantlescan.xyz)
 
