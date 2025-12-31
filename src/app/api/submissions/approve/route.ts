@@ -113,22 +113,56 @@ export async function POST(request: NextRequest) {
       .eq('id', submission.user_id)
       .single();
 
-    console.log('Profile lookup:', {
+    console.log('Profile lookup by ID:', {
       userId: submission.user_id,
       profile: profile ? { id: profile.id, wallet: profile.wallet_address } : null,
       error: profileError?.message
     });
 
-    // Try to get wallet from profile, or use user_id if it's a wallet address
+    // Try to get wallet from profile
     let walletAddress = profile?.wallet_address;
 
-    // If no wallet in profile, check if user_id looks like a wallet address
-    if (!walletAddress && submission.user_id && submission.user_id.startsWith('0x') && submission.user_id.length === 42) {
-      walletAddress = submission.user_id;
-      console.log('Using user_id as wallet address:', walletAddress);
+    // If profile lookup failed and user_id looks like a wallet address (full or partial)
+    if (!walletAddress && submission.user_id && submission.user_id.startsWith('0x')) {
+
+      // Case 1: Full wallet address (42 chars)
+      if (submission.user_id.length === 42) {
+        walletAddress = submission.user_id;
+        console.log('Using user_id as wallet address (full):', walletAddress);
+      }
+      // Case 2: Partial/truncated wallet address - try to find profile by LIKE query
+      else {
+        console.log('Trying profile lookup by partial wallet:', submission.user_id);
+
+        const { data: matchedProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('wallet_address, id')
+          .ilike('wallet_address', `${submission.user_id}%`)
+          .limit(1)
+          .single();
+
+        if (matchedProfile?.wallet_address) {
+          walletAddress = matchedProfile.wallet_address;
+          console.log('Found wallet by partial match:', walletAddress);
+        }
+      }
     }
 
-    // Still no wallet? Try to find by user metadata
+    // Still no wallet? Try one more lookup - maybe user_id is actually stored as wallet_address in profiles
+    if (!walletAddress) {
+      const { data: walletProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('wallet_address')
+        .eq('wallet_address', submission.user_id.toLowerCase())
+        .single();
+
+      if (walletProfile?.wallet_address) {
+        walletAddress = walletProfile.wallet_address;
+        console.log('Found wallet by direct wallet_address lookup:', walletAddress);
+      }
+    }
+
+    // Still no wallet? Return error
     if (!walletAddress) {
       console.error('Wallet address resolution failed:', {
         userId: submission.user_id,
