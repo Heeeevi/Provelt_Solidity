@@ -107,22 +107,44 @@ export async function POST(request: NextRequest) {
     // === APPROVE FLOW ===
 
     // Get user's wallet address
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('wallet_address')
+      .select('wallet_address, id')
       .eq('id', submission.user_id)
       .single();
 
+    console.log('Profile lookup:', {
+      userId: submission.user_id,
+      profile: profile ? { id: profile.id, wallet: profile.wallet_address } : null,
+      error: profileError?.message
+    });
+
     // Try to get wallet from profile, or use user_id if it's a wallet address
     let walletAddress = profile?.wallet_address;
-    if (!walletAddress && submission.user_id.startsWith('0x')) {
-      // user_id might be the wallet address itself
+
+    // If no wallet in profile, check if user_id looks like a wallet address
+    if (!walletAddress && submission.user_id && submission.user_id.startsWith('0x') && submission.user_id.length === 42) {
       walletAddress = submission.user_id;
+      console.log('Using user_id as wallet address:', walletAddress);
     }
 
+    // Still no wallet? Try to find by user metadata
     if (!walletAddress) {
+      console.error('Wallet address resolution failed:', {
+        userId: submission.user_id,
+        profileExists: !!profile,
+        profileWallet: profile?.wallet_address,
+      });
+
       return NextResponse.json(
-        { error: 'User wallet address not found' },
+        {
+          error: 'User wallet address not found. User may not have completed wallet login.',
+          debug: {
+            userId: submission.user_id,
+            hasProfile: !!profile,
+            walletInProfile: profile?.wallet_address || null,
+          }
+        },
         { status: 400 }
       );
     }
