@@ -1,0 +1,109 @@
+=== BADGE_NFTS ===
+[
+  {
+    "id": "4b85f06f-906f-4b52-8d69-aa28d8450c2b",
+    "user_id": "a7a35ec2-46ac-42c4-904e-b805b23ba89e",
+    "submission_id": "87a81d60-319c-4f09-ba42-7748b97599e6",
+    "challenge_id": "c3333333-3333-3333-3333-333333333333",
+    "mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5",
+    "metadata_uri": "data:application/json;base64,eyJuYW1lIjoiUFJPVkVMVDog8J+PgyA1SyBNb3JuaW5nIFJ1biIsImRlc2NyaXB0aW9uIjoiQmFkZ2UgZWFybmVkIGZvciBjb21wbGV0aW5nIFwi8J+PgyA1SyBNb3JuaW5nIFJ1blwiIG9uIFBST1ZFTFQuIiwiaW1hZ2UiOiJodHRwczovL2FwaS5kaWNlYmVhci5jb20vNy54L3NoYXBlcy9zdmc/c2VlZD1ydW5uaW5nJmJhY2tncm91bmRDb2xvcj1mNTllMGIiLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiQ2hhbGxlbmdlIiwidmFsdWUiOiLwn4+DIDVLIE1vcm5pbmcgUnVuIn0seyJ0cmFpdF90eXBlIjoiQ2F0ZWdvcnkiLCJ2YWx1ZSI6ImZpdG5lc3MifSx7InRyYWl0X3R5cGUiOiJEaWZmaWN1bHR5IiwidmFsdWUiOiJtZWRpdW0ifSx7InRyYWl0X3R5cGUiOiJDb21wbGV0ZWQiLCJ2YWx1ZSI6IjIwMjUtMTItMzFUMTI6NDU6MzcuMzU5WiJ9LHsidHJhaXRfdHlwZSI6IlBsYXRmb3JtIiwidmFsdWUiOiJQUk9WRUxUIn0seyJ0cmFpdF90eXBlIjoiTmV0d29yayIsInZhbHVlIjoiTWFudGxlIn0seyJ0cmFpdF90eXBlIjoiUG9pbnRzIiwidmFsdWUiOjE1MH1dfQ==",
+    "tx_signature": "0x96d1904d4077d631b2eb36c7ce6d27ae4ef57ce0d0e256408e31428f1ef54c0e",
+    "name": "Early Bird Runner",
+    "description": "Badge earned for completing \"🏃 5K Morning Run\"",
+    "image_url": "https://api.dicebear.com/7.x/shapes/svg?seed=running&backgroundColor=f59e0b",
+    "attributes": {
+      "points": 150,
+      "tokenId": "0",
+      "category": "fitness",
+      "challenge": "🏃 5K Morning Run",
+      "difficulty": "medium"
+    },
+    "earned_at": "2025-12-31T12:45:44.680588+00:00"
+  },
+  {
+    "id": "05f1aed7-e01b-45ab-b50a-8d4511fd8364",
+    "user_id": "b4eddf0e-16ac-4bfb-8ee5-b88b19d2b3bf",
+    "submission_id": "084e53ef-d93c-4f6f-9e61-2b697df076f1",
+    "challenge_id": "331c47fc-92f3-40b0-aef6-79834407f883",
+    "mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5#101",
+    "metadata_uri": "data:application/json;base64,eyJuYW1lIjoiUFJPVkVMVDogVGhpcmQgUGhhc2Ugb2YgUHJvbXB0aW5nIEVuZ2luZWVyaW5nIEZpZXN0YSEiLCJkZXNjcmlwdGlvbiI6IkJhZGdlIGVhcm5lZCBmb3IgY29tcGxldGluZyBcIlRoaXJkIFBoYXNlIG9mIFByb21wdGluZyBFbmdpbmVlcmluZyBGaWVzdGEhXCIgb24gUFJPVkVMVC4iLCJpbWFnZSI6Imh0dHBzOi8vcmVzLmNsb3VkaW5hcnkuY29tL2RwZXV1ejRmai9pbWFnZS91cGxvYWQvdjE3NjI1MTM4MDUvc2FtcGxlcy93YXZlcy5wbmciLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiQ2hhbGxlbmdlIiwidmFsdWUiOiJUaGlyZCBQaGFzZSBvZiBQcm9tcHRpbmcgRW5naW5lZXJpbmcgRmllc3RhISJ9LHsidHJhaXRfdHlwZSI6IkNhdGVnb3J5IiwidmFsdWUiOiJvdGhlciJ9LHsidHJhaXRfdHlwZSI6IkRpZmZpY3VsdHkiLCJ2YWx1ZSI6ImhhcmQifSx7InRyYWl0X3R5cGUiOiJDb21wbGV0ZWQiLCJ2YWx1ZSI6IjIwMjUtMTItMzFUMTI6NDU6NTIuODc0WiJ9LHsidHJhaXRfdHlwZSI6IlBsYXRmb3JtIiwidmFsdWUiOiJQUk9WRUxUIn0seyJ0cmFpdF90eXBlIjoiTmV0d29yayIsInZhbHVlIjoiTWFudGxlIn0seyJ0cmFpdF90eXBlIjoiUG9pbnRzIiwidmFsdWUiOjIwMH1dfQ==",
+    "tx_signature": "0x4dcd488ecbb338df1e2d7341efc9f78d58059416f0a0cf1dd4db50eff4704e70",
+    "name": "Prompt Jump Fest Badger",
+    "description": "Badge earned for completing \"Third Phase of Prompting Engineering Fiesta!\"",
+    "image_url": "https://res.cloudinary.com/dpeuuz4fj/image/upload/v1762513805/samples/waves.png",
+    "attributes": {
+      "points": 200,
+      "tokenId": "101",
+      "category": "other",
+      "challenge": "Third Phase of Prompting Engineering Fiesta!",
+      "difficulty": "hard"
+    },
+    "earned_at": "2025-12-31T13:12:27.403803+00:00"
+  },
+  {
+    "id": "6d0ef990-22c5-4b13-b56c-7c3cf71d3bc7",
+    "user_id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "submission_id": "7490f669-a6c6-4b14-bc66-93fee52e2032",
+    "challenge_id": "6672c482-f0e9-43e1-b7d0-21f964d4ac23",
+    "mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5#102",
+    "metadata_uri": "data:application/json;base64,eyJuYW1lIjoiUFJPVkVMVDogMzAgTWludXRlIFdvcmtvdXQiLCJkZXNjcmlwdGlvbiI6IkJhZGdlIGVhcm5lZCBmb3IgY29tcGxldGluZyBcIjMwIE1pbnV0ZSBXb3Jrb3V0XCIgb24gUFJPVkVMVC4iLCJpbWFnZSI6Imh0dHBzOi8vcHJvdmVsdC5hcHAvYmFkZ2UtZGVmYXVsdC5wbmciLCJhdHRyaWJ1dGVzIjpbeyJ0cmFpdF90eXBlIjoiQ2hhbGxlbmdlIiwidmFsdWUiOiIzMCBNaW51dGUgV29ya291dCJ9LHsidHJhaXRfdHlwZSI6IkNhdGVnb3J5IiwidmFsdWUiOiJmaXRuZXNzIn0seyJ0cmFpdF90eXBlIjoiRGlmZmljdWx0eSIsInZhbHVlIjoiZWFzeSJ9LHsidHJhaXRfdHlwZSI6IkNvbXBsZXRlZCIsInZhbHVlIjoiMjAyNS0xMi0zMVQxMzowMjozNS4yNjRaIn0seyJ0cmFpdF90eXBlIjoiUGxhdGZvcm0iLCJ2YWx1ZSI6IlBST1ZFTFQifSx7InRyYWl0X3R5cGUiOiJOZXR3b3JrIiwidmFsdWUiOiJNYW50bGUifSx7InRyYWl0X3R5cGUiOiJQb2ludHMiLCJ2YWx1ZSI6MzB9XX0=",
+    "tx_signature": "0x4c37b7e5d104cd01fd331761915c6dbed8e942fc7aad55a1881064540fad4974",
+    "name": "Fitness Pro",
+    "description": "Badge earned for completing \"30 Minute Workout\"",
+    "image_url": "https://api.dicebear.com/7.x/shapes/svg?seed=fitness",
+    "attributes": {
+      "points": 30,
+      "tokenId": "102",
+      "category": "fitness",
+      "challenge": "30 Minute Workout",
+      "difficulty": "easy"
+    },
+    "earned_at": "2025-12-31T13:12:28.001108+00:00"
+  }
+]
+
+=== APPROVED SUBMISSIONS ===
+[
+  {
+    "id": "87a81d60-319c-4f09-ba42-7748b97599e6",
+    "user_id": "a7a35ec2-46ac-42c4-904e-b805b23ba89e",
+    "status": "approved",
+    "nft_mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5"
+  },
+  {
+    "id": "084e53ef-d93c-4f6f-9e61-2b697df076f1",
+    "user_id": "b4eddf0e-16ac-4bfb-8ee5-b88b19d2b3bf",
+    "status": "approved",
+    "nft_mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5"
+  },
+  {
+    "id": "7490f669-a6c6-4b14-bc66-93fee52e2032",
+    "user_id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "status": "approved",
+    "nft_mint_address": "0xc079d4dcfae3250ba38fbf9323676d1f53256ab5"
+  }
+]
+
+=== PROFILES (with badge count) ===
+[
+  {
+    "id": "fb147a33-c065-4373-820a-90e7878bc70a",
+    "username": "ddj",
+    "badges_count": 0
+  },
+  {
+    "id": "a7a35ec2-46ac-42c4-904e-b805b23ba89e",
+    "username": "0x1d86a96d_a7a3",
+    "badges_count": 2
+  },
+  {
+    "id": "b4eddf0e-16ac-4bfb-8ee5-b88b19d2b3bf",
+    "username": "diego",
+    "badges_count": 2
+  },
+  {
+    "id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "username": "0x5a46059a_797c",
+    "badges_count": 2
+  }
+]

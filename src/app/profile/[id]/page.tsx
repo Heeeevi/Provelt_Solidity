@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  Settings, 
+import {
+  ChevronLeft,
+  Settings,
   Share2,
   Trophy,
   Target,
@@ -33,6 +33,7 @@ import { useProfile, useUserBadges, useUserSubmissions } from '@/hooks/use-profi
 import { useAuth } from '@/components/providers/auth-provider';
 import { cn, formatShortDate, truncateAddress } from '@/lib/utils';
 import { getProfileShareUrl } from '@/lib/share';
+import { getExplorerUrl } from '@/lib/mantle';
 
 /**
  * Profile Page
@@ -45,7 +46,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   const { profile, isLoading, error, refetch } = useProfile(userId);
   const { badges, isLoading: badgesLoading } = useUserBadges(userId);
   const { submissions, isLoading: submissionsLoading } = useUserSubmissions(userId);
-  
+
   const [activeTab, setActiveTab] = useState('badges');
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -65,7 +66,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   if (isLoading) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Profile"
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -96,7 +97,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   if (error || !profile) {
     return (
       <PageContainer>
-        <Header 
+        <Header
           title="Profile"
           leftAction={
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -105,7 +106,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
           }
         />
         <div className="flex items-center justify-center min-h-[60vh]">
-          <ErrorState 
+          <ErrorState
             message={error?.message || 'Profile not found'}
             onRetry={refetch}
           />
@@ -125,7 +126,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
         url={getProfileShareUrl(userId)}
       />
 
-      <Header 
+      <Header
         title={isOwnProfile ? 'My Profile' : profile.display_name || 'Profile'}
         leftAction={
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -166,7 +167,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               <h1 className="mt-4 text-xl font-bold text-white">
                 {profile.display_name || profile.username}
               </h1>
-              
+
               <p className="text-surface-400 text-sm">
                 @{profile.username}
               </p>
@@ -302,9 +303,9 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                     <Card className="overflow-hidden">
                       <div className="aspect-square bg-surface-800 relative">
                         {badge.image_url ? (
-                          <img 
-                            src={badge.image_url} 
-                            alt={badge.name || 'Badge'} 
+                          <img
+                            src={badge.image_url}
+                            alt={badge.name || 'Badge'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -312,11 +313,11 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                             <Award className="w-8 h-8 text-brand-500" />
                           </div>
                         )}
-                        
+
                         {/* NFT Link */}
                         {badge.mint_address && (
                           <a
-                            href={`https://solscan.io/token/${badge.mint_address}?cluster=devnet`}
+                            href={getExplorerUrl(badge.mint_address, 'address')}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
@@ -338,8 +339,8 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               <EmptyState
                 icon={<Award className="w-8 h-8 text-surface-500" />}
                 title="No badges yet"
-                description={isOwnProfile 
-                  ? "Complete challenges to earn badges!" 
+                description={isOwnProfile
+                  ? "Complete challenges to earn badges!"
                   : "This user hasn't earned any badges yet."
                 }
                 action={isOwnProfile ? {
@@ -375,14 +376,14 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                             <div className="w-20 h-20 rounded-lg bg-surface-800 overflow-hidden shrink-0">
                               {submission.media_url ? (
                                 submission.media_type === 'video' ? (
-                                  <video 
-                                    src={submission.media_url} 
+                                  <video
+                                    src={submission.media_url}
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <img 
-                                    src={submission.media_url} 
-                                    alt="" 
+                                  <img
+                                    src={submission.media_url}
+                                    alt=""
                                     className="w-full h-full object-cover"
                                   />
                                 )
@@ -399,20 +400,20 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
                                 <h3 className="font-medium text-white text-sm line-clamp-1">
                                   {(submission as any).challenge?.title || 'Challenge'}
                                 </h3>
-                                <Badge 
+                                <Badge
                                   variant={submission.status === 'approved' ? 'default' : 'secondary'}
                                   className="shrink-0 text-xs"
                                 >
                                   {submission.status}
                                 </Badge>
                               </div>
-                              
+
                               {submission.caption && (
                                 <p className="text-surface-400 text-sm mt-1 line-clamp-2">
                                   {submission.caption}
                                 </p>
                               )}
-                              
+
                               <div className="flex items-center gap-3 mt-2 text-xs text-surface-500">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
@@ -435,8 +436,8 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
               <EmptyState
                 icon={<Target className="w-8 h-8 text-surface-500" />}
                 title="No submissions yet"
-                description={isOwnProfile 
-                  ? "Submit proof to complete challenges!" 
+                description={isOwnProfile
+                  ? "Submit proof to complete challenges!"
                   : "This user hasn't submitted any proofs yet."
                 }
                 action={isOwnProfile ? {

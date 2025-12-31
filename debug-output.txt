@@ -1,0 +1,57 @@
+=== PENDING SUBMISSIONS ===
+[
+  {
+    "id": "3a00cb56-f013-410a-842a-07833e913bc3",
+    "user_id": "fb147a33-c065-4373-820a-90e7878bc70a",
+    "status": "pending"
+  },
+  {
+    "id": "6d7deef1-efb3-4fbe-93ce-db1621fca6be",
+    "user_id": "fb147a33-c065-4373-820a-90e7878bc70a",
+    "status": "pending"
+  },
+  {
+    "id": "a063f76f-0d4d-465a-a211-eca7d549a53d",
+    "user_id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "status": "pending"
+  },
+  {
+    "id": "7490f669-a6c6-4b14-bc66-93fee52e2032",
+    "user_id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "status": "pending"
+  },
+  {
+    "id": "084e53ef-d93c-4f6f-9e61-2b697df076f1",
+    "user_id": "b4eddf0e-16ac-4bfb-8ee5-b88b19d2b3bf",
+    "status": "pending"
+  },
+  {
+    "id": "87a81d60-319c-4f09-ba42-7748b97599e6",
+    "user_id": "a7a35ec2-46ac-42c4-904e-b805b23ba89e",
+    "status": "pending"
+  }
+]
+
+=== PROFILES ===
+[
+  {
+    "id": "797c3a0a-efaa-4b4e-9f0c-6a478c2ccdf5",
+    "wallet_address": "0x5a46059a50bc45392c56eeb8cb45074516394d3c",
+    "username": "0x5a46059a_797c"
+  },
+  {
+    "id": "b4eddf0e-16ac-4bfb-8ee5-b88b19d2b3bf",
+    "wallet_address": "0x680299febb3b6d7f0f785a1785874257d1488354",
+    "username": "diego"
+  },
+  {
+    "id": "fb147a33-c065-4373-820a-90e7878bc70a",
+    "wallet_address": "0x70d0d4378daa33cc453666931a74c75e355c478e",
+    "username": "ddj"
+  },
+  {
+    "id": "a7a35ec2-46ac-42c4-904e-b805b23ba89e",
+    "wallet_address": "0x1d86a96d178cc456ab8dc1d69e14aaf6c85a8360",
+    "username": "0x1d86a96d_a7a3"
+  }
+]
