@@ -57,22 +57,65 @@ export default function StakingPage() {
         try {
             const provider = new ethers.JsonRpcProvider(MANTLE_RPC_URL);
             const badgeContract = new ethers.Contract(BADGE_CONTRACT_ADDRESS, PROVELT_BADGE_ABI, provider);
-            const stakingContract = new ethers.Contract(STAKING_CONTRACT_ADDRESS, STAKING_CONTRACT_ABI, provider);
             const prvltContract = new ethers.Contract(PRVLT_TOKEN_ADDRESS, PRVLT_TOKEN_ABI, provider);
 
-            // Get PRVLT balance
-            const balance = await prvltContract.balanceOf(address);
-            setPrvltBalance(ethers.formatEther(balance));
+            // Get PRVLT balance first (this should always work)
+            try {
+                const balance = await prvltContract.balanceOf(address);
+                setPrvltBalance(ethers.formatEther(balance));
+            } catch (prvltErr) {
+                console.error('Error getting PRVLT balance:', prvltErr);
+                setPrvltBalance('0');
+            }
 
             // Get owned badges
-            const badgeIds: bigint[] = await badgeContract.getBadgesOf(address);
+            let badgeIds: bigint[] = [];
+            try {
+                badgeIds = await badgeContract.getBadgesOf(address);
+            } catch (badgeErr) {
+                console.error('Error getting badges:', badgeErr);
+            }
 
-            // Get staked badges
-            const stakedIds: bigint[] = await stakingContract.getStakedTokens(address);
+            // Try to get staking data - this may fail if contract not deployed
+            let stakedIds: bigint[] = [];
+            let stakingAvailable = false;
+            
+            try {
+                // First check if staking contract has code
+                const stakingCode = await provider.getCode(STAKING_CONTRACT_ADDRESS);
+                if (stakingCode === '0x' || stakingCode === '0x0') {
+                    console.warn('Staking contract not deployed at:', STAKING_CONTRACT_ADDRESS);
+                    setError('Staking contract not available. Please contact admin to deploy the staking contract.');
+                } else {
+                    stakingAvailable = true;
+                    const stakingContract = new ethers.Contract(STAKING_CONTRACT_ADDRESS, STAKING_CONTRACT_ABI, provider);
+                    
+                    // Get staked badges
+                    stakedIds = await stakingContract.getStakedTokens(address);
 
-            // Get total pending rewards
-            const pending = await stakingContract.totalPendingRewards(address);
-            setTotalPending(ethers.formatEther(pending));
+                    // Get total pending rewards
+                    const pending = await stakingContract.totalPendingRewards(address);
+                    setTotalPending(ethers.formatEther(pending));
+
+                    // Process staked badges
+                    const staked: Badge[] = [];
+                    for (const id of stakedIds) {
+                        const tokenId = id.toString();
+                        const stakeInfo: StakeInfo = await stakingContract.stakes(id);
+                        const rewards = await stakingContract.pendingRewards(id);
+                        staked.push({
+                            tokenId,
+                            difficulty: stakeInfo.difficulty,
+                            isStaked: true,
+                            pendingRewards: ethers.formatEther(rewards)
+                        });
+                    }
+                    setStakedBadges(staked);
+                }
+            } catch (stakingErr) {
+                console.error('Error with staking contract:', stakingErr);
+                setError('Staking contract not available. Please contact admin to deploy the staking contract.');
+            }
 
             // Process owned badges (not staked)
             const owned: Badge[] = [];
@@ -90,24 +133,9 @@ export default function StakingPage() {
             }
             setOwnedBadges(owned);
 
-            // Process staked badges
-            const staked: Badge[] = [];
-            for (const id of stakedIds) {
-                const tokenId = id.toString();
-                const stakeInfo: StakeInfo = await stakingContract.stakes(id);
-                const rewards = await stakingContract.pendingRewards(id);
-                staked.push({
-                    tokenId,
-                    difficulty: stakeInfo.difficulty,
-                    isStaked: true,
-                    pendingRewards: ethers.formatEther(rewards)
-                });
-            }
-            setStakedBadges(staked);
-
         } catch (err) {
             console.error('Error loading data:', err);
-            setError('Failed to load staking data. Please try again.');
+            setError('Failed to load staking data. Please check your connection.');
         } finally {
             setLoading(false);
         }
@@ -127,6 +155,14 @@ export default function StakingPage() {
 
         try {
             const provider = new ethers.BrowserProvider(walletClient);
+            
+            // Check if staking contract is deployed
+            const stakingCode = await provider.getCode(STAKING_CONTRACT_ADDRESS);
+            if (stakingCode === '0x' || stakingCode === '0x0') {
+                setError('Staking contract not deployed. Please contact admin.');
+                return;
+            }
+            
             const signer = await provider.getSigner();
 
             // First approve NFT transfer

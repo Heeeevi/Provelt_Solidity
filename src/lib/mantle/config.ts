@@ -32,7 +32,7 @@ export const MANTLE_RPC_URL = process.env.NEXT_PUBLIC_MANTLE_RPC_URL || activeCh
 // Contract addresses - deployed to Mantle Sepolia
 export const BADGE_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_BADGE_CONTRACT_ADDRESS || '0xc079d4dcfae3250ba38fbf9323676d1f53256ab5';
 export const PRVLT_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_PRVLT_TOKEN_ADDRESS || '0xd707f900be8386c7bb094d21d90cc17202773208';
-export const STAKING_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_STAKING_CONTRACT_ADDRESS || '0x98c3Fadf7BB455dA84e11220D9D52dcd500CB43C6';
+export const STAKING_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_STAKING_CONTRACT_ADDRESS || '0x3B5060857072BD20390890e0EEED6D1C7A37A404';
 
 // Explorer URLs
 export function getExplorerUrl(hashOrAddress: string, type: 'tx' | 'address' = 'tx'): string {
